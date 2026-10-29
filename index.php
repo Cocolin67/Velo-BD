@@ -43,6 +43,7 @@ function tableau(PDO $pdo, string $titre, string $sql): void
 <head>
   <meta charset="utf-8">
   <title>Test velo_libre_service</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">  
   <style>
     body { font-family: sans-serif; margin: 2rem; color: #222; }
     h1 { color: #173; }
