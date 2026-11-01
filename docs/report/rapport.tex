@@ -1,0 +1,187 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{eso-pic}
+\usepackage{geometry}
+\usepackage{helvet} % Police sans serif ressemblante au visuel
+\renewcommand{\familydefault}{\sfdefault} % Applique la police sans serif par défaut
+
+\geometry{margin=0pt}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+% ===== COULEURS EXACTES DU VISUEL =====
+\definecolor{fondvert}{HTML}{e8bd4b} % Vert-jaune dominant
+\definecolor{bandeauviolet}{HTML}{7A5E7A} % Bandeau du titre
+\definecolor{bandeaugros}{HTML}{4A4C52} % Bandeau gris foncé
+\definecolor{bleugris}{HTML}{8C96A7} % Texte secondaire (filière, adresse)
+
+% ===== INFORMATIONS À MODIFIER =====
+\newcommand{\Etudiant}{AUBERT Colin - GRATIA Alban - PREVOST Antoine}
+\newcommand{\Titre}{Création et optimisation d'un système d'informations}
+\newcommand{\TitreSuite}{de gestion d'un réseau de vélos en libre-service}
+\newcommand{\Reference}{Rapport de projet BD70 - A26}
+
+\newcommand{\Departement}{Département Génie informatique}
+\newcommand{\DepartementSuite}{3A FISA}
+\newcommand{\Filiere}{}
+\newcommand{\FiliereSuite}{}
+
+\newcommand{\Entreprise}{}
+\newcommand{\Adresse}{}
+\newcommand{\Ville}{}
+\newcommand{\Site}{}
+
+\newcommand{\Tuteur}{}
+\newcommand{\Suiveur}{}
+
+% ===== PAGE 1 : COUVERTURE =====
+\newcommand{\Couverture}{%
+	\thispagestyle{empty}
+	
+	\AddToShipoutPictureBG*{%
+		\begin{tikzpicture}[remember picture, overlay, x=1mm, y=-1mm]
+			% Fond vert-jaune
+			\fill[fondvert] (current page.north west) ++(0,126) rectangle ++(210,135);
+			
+			% Image supérieure (à remplacer par votre image)
+			\IfFileExists{assets/template_core/sample_img.jpg}{
+				\node[anchor=north west,inner sep=0] at (current page.north west)
+				{\includegraphics[width=210mm,height=85mm]{assets/template_core/sample_img.jpg}};
+			}{
+				\fill[blue!70!black] (current page.north west) rectangle ++(210,85);
+				\node[fill=white, text=black, font=\bfseries\Large, inner sep=3mm]
+				at ([xshift=150mm,yshift=-65mm]current page.north west) {Visuel à remplacer};
+			}
+			
+			% Bandeau noir UTBM
+			\fill[black] ([yshift=-85mm]current page.north west) rectangle ([xshift=210mm,yshift=-93mm]current page.north west);
+			\node[anchor=west, text=white, font=\bfseries\scriptsize]
+			at ([xshift=10mm,yshift=-89mm]current page.north west) {UNIVERSITÉ DE TECHNOLOGIE DE BELFORT-MONTBÉLIARD};
+			
+			% Bandeau violet (Titre)
+			\fill[bandeauviolet] ([yshift=-93mm]current page.north west) rectangle ([xshift=210mm,yshift=-118mm]current page.north west);
+			\node[anchor=north west, align=left, text=white, font=\bfseries\fontsize{18}{22}\selectfont]
+			at ([xshift=10mm,yshift=-98mm]current page.north west) {\Titre\\\TitreSuite};
+			
+			% Bandeau gris (Référence)
+			\fill[bandeaugros] ([yshift=-118mm]current page.north west) rectangle ([xshift=210mm,yshift=-126mm]current page.north west);
+			\node[anchor=west, text=white, font=\bfseries\small]
+			at ([xshift=10mm,yshift=-122mm]current page.north west) {\Reference};
+			
+			% Logos en bas (zone blanche) - CORRECTION DU YSHIFT POUR EVITER LE ROGNAGE
+			\IfFileExists{assets/template_core/bottom_banner.png}{
+				\node[anchor=south east,inner sep=0] at ([xshift=-10mm,yshift=4mm]current page.south east)
+				{\includegraphics[height=25mm, keepaspectratio]{assets/template_core/bottom_banner.png}};
+			}{
+				\node[anchor=south east, text=black, font=\bfseries\large]
+				at ([xshift=-10mm,yshift=10mm]current page.south east) {UTBM \quad itii \quad UIMM};
+			}
+		\end{tikzpicture}
+	}
+	
+	\AddToShipoutPictureFG*{%
+		\begin{tikzpicture}[remember picture, overlay, x=1mm, y=-1mm]
+			% Étudiant et filière
+			\node[anchor=north west, align=left, text=black, font=\bfseries\Large]
+			at ([xshift=10mm,yshift=-140mm]current page.north west) {\Etudiant};
+			
+			\node[anchor=north west, align=left, text=black, font=\bfseries\small]
+			at ([xshift=10mm,yshift=-150mm]current page.north west) {\Departement\\\DepartementSuite};
+			
+			\node[anchor=north west, align=left, text=bleugris, font=\bfseries\small]
+			at ([xshift=10mm,yshift=-159mm]current page.north west) {\Filiere\\\FiliereSuite};
+			
+			% Entreprise
+			\node[anchor=north west, align=left, text=black, font=\bfseries\Large]
+			at ([xshift=10mm,yshift=-195mm]current page.north west) {\Entreprise};
+			
+			\node[anchor=north west, align=left, text=bleugris, font=\bfseries\small]
+			at ([xshift=10mm,yshift=-203mm]current page.north west) {\Adresse\\\Ville\\\Site};
+			
+			% Tuteurs
+			%\node[anchor=north west, align=left, text=bleugris, font=\small]
+			%at ([xshift=10mm,yshift=-235mm]current page.north west) {Tuteur en entreprise};
+			%\node[anchor=north west, align=left, text=black, font=\bfseries\large]
+			%at ([xshift=10mm,yshift=-240mm]current page.north west) {\Tuteur};
+			
+			%\node[anchor=north east, align=right, text=bleugris, font=\small]
+			%at ([xshift=-10mm,yshift=-235mm]current page.north east) {Suiveur UTBM};
+			%\node[anchor=north east, align=right, text=black, font=\bfseries\large]
+			%at ([xshift=-10mm,yshift=-240mm]current page.north east) {\Suiveur};
+		\end{tikzpicture}
+	}
+	
+	\null
+	\clearpage
+}
+
+% ===== PAGE 2 : FOND SPÉCIFIQUE =====
+\newcommand{\FondPageDeux}{%
+	\AddToShipoutPictureBG*{%
+		\begin{tikzpicture}[remember picture, overlay, x=1mm, y=-1mm]
+			% Bandeau gris séparateur
+			\fill[bandeaugros] (current page.north west) ++(0,73) rectangle ++(210,8);
+			% Zone vert-jaune pour le résumé
+			\fill[fondvert] (current page.north west) ++(0,81) rectangle ++(210,185);
+			
+			% Bloc entreprise en bas à gauche sur fond vert
+			\node[anchor=south west, align=left] at ([xshift=10mm, yshift=-35mm]current page.south west) {
+				\begin{tabular}{@{}l@{}}
+					\textbf{\Large \Entreprise} \\
+					\textcolor{bleugris}{\textbf{\Adresse}} \\
+					\textcolor{bleugris}{\textbf{\Ville}} \\
+					\textcolor{bleugris}{\textbf{\Site}}
+				\end{tabular}
+			};
+			
+			% Logo UTBM en bas à droite sur fond blanc - CORRECTION DU YSHIFT
+			\IfFileExists{assets/template_core/logo_utbm.jpg}{
+				\node[anchor=south east, inner sep=0] at ([xshift=-10mm, yshift=4mm]current page.south east)
+				{\includegraphics[height=20mm]{assets/template_core/logo_utbm.jpg}};
+			}{
+				\node[anchor=south east, text=black, font=\bfseries\Large]
+				at ([xshift=-10mm, yshift=15mm]current page.south east) {Logo UTBM};
+			}
+		\end{tikzpicture}
+	}
+}
+
+\begin{document}
+	
+	\Couverture
+	
+	% ===== STRUCTURE DE LA PAGE 2 =====
+	\newgeometry{left=15mm, right=15mm, top=15mm, bottom=15mm}
+	\FondPageDeux
+	
+	{\bfseries\large Mots clefs}\\[2ex]
+	Base de données - MariaDB - InnoDB - MySQL - Vélo - Optimisation - Automatisation
+	
+	% Espace pour s'aligner juste au-dessus du bandeau gris
+	\vspace{30mm} 
+	\noindent\textbf{\large \Etudiant} \hfill \textbf{\large \Reference}
+	
+	% Espace pour entrer dans la zone vert-jaune
+	\vspace{22mm} 
+	
+	{\bfseries\large Résumé}\\[2ex]
+	Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus volutpat libero pharetra tempor. Cras vestibulum bibendum augue. Praesent egestas leo in pede. Praesent blandit odio eu enim. Pellentesque sed dui ut augue blandit sodales. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. Maecenas adipiscing ante non diam sodales hendrerit. 
+	
+	Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue.
+	
+	\clearpage
+	
+	% ===== DÉBUT DU RAPPORT (PAGE 3) =====
+	\newgeometry{margin=25mm} % Marges standards pour la suite
+	\pagestyle{plain} % Numérotation simple en bas
+	
+	\section*{Introduction}
+	Le contenu de votre rapport commence ici...
+	
+\end{document}
