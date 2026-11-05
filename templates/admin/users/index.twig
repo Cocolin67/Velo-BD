@@ -1,0 +1,52 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Utilisateurs{% endblock %}
+
+{% block content %}
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Utilisateurs</h1>
+      <p class="mt-1 text-sm text-zinc-500">
+        {{ counts.usager|num }} usagers · {{ counts.operateur|num }} opérateurs · {{ counts.administrateur|num }} administrateurs
+      </p>
+    </div>
+    <a href="{{ url_for('admin.users.create') }}" class="btn-primary">+ Nouvel opérateur</a>
+  </div>
+
+  <form method="get" class="card mb-4 flex flex-wrap gap-3 p-4">
+    <input type="search" name="q" value="{{ filters.q }}" placeholder="Nom, prénom ou email…" class="input min-w-64 flex-1" aria-label="Recherche">
+    <select name="role" class="input w-auto" aria-label="Rôle">
+      <option value="">Tous les rôles</option>
+      {% for r in ['usager', 'operateur', 'administrateur'] %}<option value="{{ r }}" {{ filters.role == r ? 'selected' }}>{{ r|label }}</option>{% endfor %}
+    </select>
+    <button class="btn-primary">Rechercher</button>
+    {% if query %}<a href="{{ url_for('admin.users') }}" class="btn-ghost">Effacer</a>{% endif %}
+  </form>
+
+  <div class="card overflow-hidden">
+    {% if users is empty %}
+      {{ ui.empty('Aucun compte ne correspond.') }}
+    {% else %}
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead class="bg-zinc-50"><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Détail</th><th>Inscription</th></tr></thead>
+          <tbody class="divide-y divide-zinc-100">
+            {% for u in users %}
+              <tr>
+                <td class="font-medium text-zinc-900">{{ u.nom }} {{ u.prenom }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.role ? ui.badge(u.role) : '—' }}</td>
+                <td class="text-xs text-zinc-500">
+                  {% if u.matricule %}{{ u.matricule }} · {{ u.specialite|label }}{% else %}{{ u.telephone ?? '' }}{% endif %}
+                </td>
+                <td>{{ u.date_inscription|d }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {{ ui.pagination('admin.users', page, has_next, query) }}
+    {% endif %}
+  </div>
+{% endblock %}

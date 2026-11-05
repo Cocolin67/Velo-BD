@@ -1,0 +1,38 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Nouvel opérateur{% endblock %}
+
+{% block content %}
+  {% set errors = errors ?? {} %}
+  <a href="{{ url_for('admin.users') }}" class="text-sm text-zinc-500 hover:text-zinc-900">← Utilisateurs</a>
+  <h1 class="mb-1 mt-3 text-2xl font-semibold tracking-tight">Nouvel opérateur</h1>
+  <p class="mb-6 text-sm text-zinc-500">Les usagers créent leur compte eux-mêmes depuis la page d'inscription.</p>
+
+  <form method="post" action="{{ url_for('admin.users.store') }}" class="card grid max-w-2xl gap-4 p-6 sm:grid-cols-2" novalidate>
+    {{ csrf_field() }}
+    {{ ui.field('prenom', 'Prénom', old.prenom ?? '', null, 'text', {required: true, maxlength: 100}) }}
+    {{ ui.field('nom', 'Nom', old.nom ?? '', errors.nom ?? null, 'text', {required: true, maxlength: 100}) }}
+    <div class="sm:col-span-2">
+      {{ ui.field('email', 'Email professionnel', old.email ?? '', errors.email ?? null, 'email', {required: true}) }}
+    </div>
+    {{ ui.field('matricule', 'Matricule', old.matricule ?? '', errors.matricule ?? null, 'text', {required: true, maxlength: 20, placeholder: 'OPE-042'}) }}
+    <div>
+      <label for="f-specialite" class="label">Spécialité</label>
+      <select id="f-specialite" name="specialite" class="input">
+        <option value="regulation" {{ old.specialite == 'regulation' ? 'selected' }}>Régulation</option>
+        <option value="maintenance" {{ old.specialite == 'maintenance' ? 'selected' }}>Maintenance</option>
+      </select>
+    </div>
+    {{ ui.field('password', 'Mot de passe provisoire', '', errors.password ?? null, 'password', {required: true, autocomplete: 'new-password'}) }}
+    {{ ui.field('password_confirm', 'Confirmation', '', errors.password_confirm ?? null, 'password', {required: true, autocomplete: 'new-password'}) }}
+    <label class="flex items-center gap-2 text-sm sm:col-span-2">
+      <input type="checkbox" name="est_admin" value="1" {{ (old.est_admin ?? false) ? 'checked' }} class="rounded border-zinc-300 text-emerald-600">
+      Donner les droits d'administrateur
+    </label>
+    <div class="flex gap-2 sm:col-span-2">
+      <button class="btn-primary">Créer le compte</button>
+      <a href="{{ url_for('admin.users') }}" class="btn-ghost">Annuler</a>
+    </div>
+  </form>
+{% endblock %}

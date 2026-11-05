@@ -104,6 +104,18 @@ final class StatsRepository
         return $this->timed('sp_proposer_deplacements', [$low, $high]);
     }
 
+    /** Indicateurs du jour pour le tableau de bord de l'exploitant (requêtes servies par index). */
+    public function today(): array
+    {
+        return $this->db->fetchOne(
+            "SELECT (SELECT COUNT(*) FROM location WHERE velo_en_cours IS NOT NULL)          AS en_cours,
+                    (SELECT COUNT(*) FROM location WHERE date_heure_emprunt >= CURDATE())    AS trajets_jour,
+                    (SELECT COALESCE(SUM(cout), 0) FROM location
+                      WHERE date_heure_emprunt >= CURDATE())                                 AS recettes_jour,
+                    (SELECT COUNT(*) FROM signalement WHERE statut = 'ouvert')               AS signalements"
+        ) ?? [];
+    }
+
     /** @return array<string, float> */
     public function timings(): array
     {

@@ -17,3 +17,6 @@
 {% if is_granted('operateur') %}
   {{ ui.nav_link('stats', 'Statistiques') }}
 {% endif %}
+{% if is_granted('administrateur') %}
+  {{ ui.nav_link('admin.users', 'Utilisateurs') }}
+{% endif %}

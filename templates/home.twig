@@ -1,21 +1,138 @@
 {% extends 'layout.twig' %}
 {% import 'macros/ui.twig' as ui %}
 
-{% block content %}
-  <section class="py-6 sm:py-10">
-    <p class="text-sm font-medium text-emerald-700">Réseau de l'agglomération</p>
-    <h1 class="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-      Des vélos en libre-service, disponibles en temps réel.
-    </h1>
-    <p class="mt-3 max-w-xl text-zinc-500">
-      Consultez les stations, empruntez un vélo mécanique ou électrique et suivez vos trajets.
-    </p>
-  </section>
+{% block title %}{{ current_user() ? 'Tableau de bord' : 'Accueil' }}{% endblock %}
 
-  <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-    {{ ui.stat('Stations en service', network.stations|num) }}
-    {{ ui.stat('Vélos disponibles', network.velos_disponibles|num) }}
-    {{ ui.stat('dont électriques', network.velos_electriques|num) }}
-    {{ ui.stat('Bornes libres', network.bornes_libres|num) }}
-  </section>
+{% block content %}
+  {% set user = current_user() %}
+
+  {% if not user %}
+    {# ---------------------------------------------------------------- Visiteur #}
+    <section class="py-6 sm:py-10">
+      <p class="text-sm font-medium text-emerald-700">Réseau de l'agglomération</p>
+      <h1 class="mt-2 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+        Des vélos en libre-service, disponibles en temps réel.
+      </h1>
+      <p class="mt-3 max-w-xl text-zinc-500">
+        Consultez les stations, empruntez un vélo mécanique ou électrique et suivez vos trajets.
+      </p>
+      <div class="mt-6 flex gap-3">
+        <a href="{{ url_for('register') }}" class="btn-primary">Créer un compte</a>
+        <a href="{{ url_for('login') }}" class="btn-secondary">Se connecter</a>
+      </div>
+    </section>
+    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {{ ui.stat('Stations en service', network.stations|num) }}
+      {{ ui.stat('Vélos disponibles', network.velos_disponibles|num) }}
+      {{ ui.stat('dont électriques', network.velos_electriques|num) }}
+      {{ ui.stat('Bornes libres', network.bornes_libres|num) }}
+    </section>
+
+  {% elseif user.role == 'usager' %}
+    {# ---------------------------------------------------------------- Usager #}
+    {{ ui.page_header('Bonjour ' ~ user.prenom, network.velos_disponibles|num ~ ' vélos disponibles dans ' ~ network.stations ~ ' stations.') }}
+
+    <div class="mb-6 grid gap-4 lg:grid-cols-3">
+      <div class="card p-6 lg:col-span-2">
+        {% if current %}
+          <p class="text-sm font-medium text-sky-700">Trajet en cours</p>
+          <p class="mt-1 text-lg font-semibold">Vélo #{{ current.id_velo }} depuis {{ current.station_depart }}</p>
+          <p class="mt-1 text-sm text-zinc-500">{{ current.minutes|duration }} · coût estimé {{ current.cout_estime|money }}</p>
+          <a href="{{ url_for('rentals') }}" class="btn-primary mt-4">Rendre le vélo</a>
+        {% elseif subscription %}
+          <p class="text-sm font-medium text-emerald-700">Prêt à rouler</p>
+          <p class="mt-1 text-lg font-semibold">Choisissez une station et empruntez un vélo.</p>
+          <div class="mt-4 flex gap-2">
+            <a href="{{ url_for('rentals') }}" class="btn-primary">Emprunter un vélo</a>
+            <a href="{{ url_for('stations') }}" class="btn-secondary">Voir les stations</a>
+          </div>
+        {% else %}
+          <p class="text-sm font-medium text-amber-700">Aucun abonnement valide</p>
+          <p class="mt-1 text-lg font-semibold">Souscrivez une formule pour emprunter un vélo.</p>
+          <a href="{{ url_for('subscriptions') }}" class="btn-primary mt-4">Voir les formules</a>
+        {% endif %}
+      </div>
+      <div class="card p-6">
+        <p class="text-sm text-zinc-500">Abonnement</p>
+        {% if subscription %}
+          <p class="mt-1 text-lg font-semibold">{{ subscription.libelle }}</p>
+          <p class="text-sm text-zinc-500">jusqu'au {{ subscription.date_fin|d }}</p>
+          <p class="mt-2 text-xs text-zinc-400">{{ subscription.duree_gratuite_min }} min gratuites par trajet</p>
+        {% else %}
+          <p class="mt-1 text-lg font-semibold text-zinc-400">Aucun</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <section class="mb-6 grid gap-4 sm:grid-cols-3">
+      {{ ui.stat('Trajets effectués', summary.trajets|num) }}
+      {{ ui.stat('Temps total à vélo', summary.minutes|duration) }}
+      {{ ui.stat('Dépenses (hors abonnement)', summary.depenses|money) }}
+    </section>
+
+    {% if recent %}
+      <section class="card overflow-hidden">
+        <div class="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+          <h2 class="font-semibold">Derniers trajets</h2>
+          <a href="{{ url_for('rentals') }}" class="text-sm link">Tout voir</a>
+        </div>
+        <ul class="divide-y divide-zinc-100">
+          {% for l in recent %}
+            <li class="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+              <span>{{ l.station_depart }} <span class="text-zinc-400">→</span> {{ l.station_arrivee ?? 'en cours' }}</span>
+              <span class="text-zinc-500">{{ l.date_heure_emprunt|dt }} · {{ l.duree_min|duration }} · {{ l.cout|money }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+  {% else %}
+    {# ---------------------------------------------------------------- Opérateur / administrateur #}
+    {{ ui.page_header('Tableau de bord', 'Exploitation du réseau en temps réel.') }}
+
+    <section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {{ ui.stat('Locations en cours', today.en_cours|num) }}
+      {{ ui.stat('Trajets aujourd\'hui', today.trajets_jour|num, today.recettes_jour|money ~ ' facturés') }}
+      {{ ui.stat('Vélos disponibles', fleet.disponible|num, network.bornes_libres|num ~ ' bornes libres') }}
+      {{ ui.stat('Stations à rééquilibrer', rebalance, 'vides ou pleines (20 % / 80 %)') }}
+    </section>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+      <section class="card p-5">
+        <h2 class="mb-3 font-semibold">État de la flotte</h2>
+        {% set total = max(fleet|reduce((s, n) => s + n, 0), 1) %}
+        {% for etat, n in fleet %}
+          <div class="py-1.5">
+            <div class="mb-1 flex justify-between text-sm"><span>{{ etat|label }}</span><span class="tabular-nums text-zinc-500">{{ n|num }}</span></div>
+            <div class="h-1.5 overflow-hidden rounded-full bg-zinc-100">
+              {% set colors = {disponible: 'bg-emerald-500', en_location: 'bg-sky-500', en_atelier: 'bg-amber-500', defectueux: 'bg-red-500'} %}
+              <div class="h-full {{ colors[etat] }}" style="width: {{ (n / total * 100)|round(1) }}%"></div>
+            </div>
+          </div>
+        {% endfor %}
+        <a href="{{ url_for('bikes') }}" class="mt-3 inline-block text-sm link">Voir la flotte</a>
+      </section>
+
+      <section class="card overflow-hidden lg:col-span-2">
+        <div class="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+          <h2 class="font-semibold">Signalements ouverts <span class="text-sm font-normal text-zinc-400">{{ today.signalements }}</span></h2>
+          <a href="{{ url_for('reports', {}, {statut: 'ouvert'}) }}" class="text-sm link">Traiter</a>
+        </div>
+        <ul class="divide-y divide-zinc-100">
+          {% for r in queue %}
+            <li class="px-4 py-3 text-sm">
+              <div class="flex justify-between gap-3">
+                <span class="font-medium">{% if r.id_velo %}Vélo #{{ r.id_velo }}{% else %}{{ r.station }}{% endif %}</span>
+                <span class="text-xs text-zinc-400">{{ r.date_heure|dt }}</span>
+              </div>
+              <p class="truncate text-zinc-500">{{ r.description }}</p>
+            </li>
+          {% else %}
+            <li>{{ ui.empty('Aucun signalement en attente.') }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
+  {% endif %}
 {% endblock %}

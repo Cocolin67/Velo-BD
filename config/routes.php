@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Controller\AdminUserController;
 use App\Controller\AuthController;
 use App\Controller\BikeController;
 use App\Controller\HomeController;
@@ -78,5 +79,9 @@ return static function (App $app): void {
         $g->post('/stations/{id:[0-9]+}', [StationController::class, 'update'])->setName('stations.update');
         $g->post('/stations/{id:[0-9]+}/supprimer', [StationController::class, 'delete'])->setName('stations.delete');
         $g->post('/stations/{id:[0-9]+}/bornes/{borne:[0-9]+}', [StationController::class, 'borneEtat'])->setName('stations.borne');
+
+        $g->get('/admin/utilisateurs', [AdminUserController::class, 'index'])->setName('admin.users');
+        $g->get('/admin/utilisateurs/nouveau', [AdminUserController::class, 'createForm'])->setName('admin.users.create');
+        $g->post('/admin/utilisateurs', [AdminUserController::class, 'create'])->setName('admin.users.store');
     })->add($require([Auth::ADMIN]));
 };
