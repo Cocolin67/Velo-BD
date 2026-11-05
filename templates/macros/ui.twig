@@ -74,3 +74,15 @@
     <span class="text-xs tabular-nums text-zinc-500">{{ p }} %</span>
   </div>
 {% endmacro %}
+
+{# Champ de formulaire avec libellé et message d'erreur #}
+{% macro field(name, label, value = null, error = null, type = 'text', attrs = {}) %}
+  <div>
+    <label for="f-{{ name }}" class="label">{{ label }}</label>
+    <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}"
+           class="input {{ error ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' }}"
+           {% for k, v in attrs %}{{ k }}{% if v is not same as(true) %}="{{ v }}"{% endif %} {% endfor %}
+           {% if error %}aria-invalid="true" aria-describedby="e-{{ name }}"{% endif %}>
+    {% if error %}<p id="e-{{ name }}" class="mt-1 text-xs text-red-600">{{ error }}</p>{% endif %}
+  </div>
+{% endmacro %}

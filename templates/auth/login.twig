@@ -1,0 +1,23 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-sm py-6">
+    <h1 class="text-2xl font-semibold tracking-tight">Connexion</h1>
+    <p class="mt-1 text-sm text-zinc-500">
+      Pas encore de compte ? <a class="link" href="{{ url_for('register') }}">Inscrivez-vous</a>
+    </p>
+
+    <form method="post" action="{{ url_for('login.submit') }}" class="card mt-6 space-y-4 p-6">
+      {{ csrf_field() }}
+      {% if error is defined %}
+        <p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ error }}</p>
+      {% endif %}
+      {{ ui.field('email', 'Email', old.email ?? '', null, 'email', {required: true, autocomplete: 'email', autofocus: true}) }}
+      {{ ui.field('password', 'Mot de passe', '', null, 'password', {required: true, autocomplete: 'current-password'}) }}
+      <button type="submit" class="btn-primary w-full">Se connecter</button>
+    </form>
+  </div>
+{% endblock %}

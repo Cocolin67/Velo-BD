@@ -1,0 +1,54 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Mon profil{% endblock %}
+
+{% block content %}
+  {% set errors = errors ?? {} %}
+  {% set pwd_errors = pwd_errors ?? {} %}
+  {% set user = current_user() %}
+  {{ ui.page_header('Mon profil', 'Inscrit le ' ~ profile.date_inscription|d) }}
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <aside class="card h-fit p-6">
+      <div class="grid size-12 place-items-center rounded-full bg-emerald-100 text-lg font-semibold text-emerald-700">
+        {{ profile.prenom|first|upper }}{{ profile.nom|first|upper }}
+      </div>
+      <p class="mt-3 font-medium">{{ profile.prenom }} {{ profile.nom }}</p>
+      <p class="text-sm text-zinc-500">{{ profile.email }}</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {{ ui.badge(user.role) }}
+        {% if profile.specialite %}{{ ui.badge(profile.specialite) }}{% endif %}
+      </div>
+      {% if profile.matricule %}<p class="mt-3 text-xs text-zinc-500">Matricule {{ profile.matricule }}</p>{% endif %}
+    </aside>
+
+    <div class="space-y-6 lg:col-span-2">
+      <form method="post" action="{{ url_for('profile.update') }}" class="card grid gap-4 p-6 sm:grid-cols-2">
+        {{ csrf_field() }}
+        <h2 class="font-semibold sm:col-span-2">Informations</h2>
+        {{ ui.field('prenom', 'Prénom', profile.prenom, null, 'text', {required: true, maxlength: 100}) }}
+        {{ ui.field('nom', 'Nom', profile.nom, errors.nom ?? null, 'text', {required: true, maxlength: 100}) }}
+        <div class="sm:col-span-2">
+          {{ ui.field('email', 'Email', profile.email, errors.email ?? null, 'email', {required: true}) }}
+        </div>
+        {% if user.role == 'usager' %}
+          {{ ui.field('telephone', 'Téléphone', profile.telephone, errors.telephone ?? null, 'tel', {maxlength: 20}) }}
+          {{ ui.field('date_naissance', 'Date de naissance', profile.date_naissance, errors.date_naissance ?? null, 'date') }}
+        {% endif %}
+        <div class="sm:col-span-2"><button class="btn-primary">Enregistrer</button></div>
+      </form>
+
+      <form method="post" action="{{ url_for('profile.password') }}" class="card grid gap-4 p-6 sm:grid-cols-2">
+        {{ csrf_field() }}
+        <h2 class="font-semibold sm:col-span-2">Changer de mot de passe</h2>
+        <div class="sm:col-span-2">
+          {{ ui.field('current', 'Mot de passe actuel', '', pwd_errors.current ?? null, 'password', {required: true, autocomplete: 'current-password'}) }}
+        </div>
+        {{ ui.field('password', 'Nouveau mot de passe', '', pwd_errors.password ?? null, 'password', {required: true, autocomplete: 'new-password'}) }}
+        {{ ui.field('password_confirm', 'Confirmation', '', pwd_errors.password_confirm ?? null, 'password', {required: true, autocomplete: 'new-password'}) }}
+        <div class="sm:col-span-2"><button class="btn-secondary">Modifier le mot de passe</button></div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

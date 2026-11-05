@@ -31,21 +31,4 @@ final class Session
             session_regenerate_id(true);
         }
     }
-
-    public function destroy(): void
-    {
-        $_SESSION = [];
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            $p = session_get_cookie_params();
-            setcookie(session_name(), '', [
-                'expires'  => time() - 3600,
-                'path'     => $p['path'],
-                'domain'   => $p['domain'],
-                'secure'   => $p['secure'],
-                'httponly' => $p['httponly'],
-                'samesite' => $p['samesite'],
-            ]);
-            session_destroy();
-        }
-    }
 }

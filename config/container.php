@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Database\Database;
 use App\Twig\AppExtension;
+use App\Twig\SecurityExtension;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Slim\Psr7\Factory\ResponseFactory;
@@ -25,6 +26,7 @@ return [
             'autoescape'       => 'html',   // échappement systématique contre le XSS
         ]);
         $twig->addExtension($c->get(AppExtension::class));
+        $twig->addExtension($c->get(SecurityExtension::class));
         $twig->getEnvironment()->addGlobal('app_name', $settings['app']['name']);
 
         return $twig;

@@ -1,0 +1,30 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+  {% set errors = errors ?? {} %}
+  {% set old = old ?? {} %}
+  <div class="mx-auto max-w-lg py-6">
+    <h1 class="text-2xl font-semibold tracking-tight">Créer un compte</h1>
+    <p class="mt-1 text-sm text-zinc-500">
+      Déjà inscrit ? <a class="link" href="{{ url_for('login') }}">Connectez-vous</a>
+    </p>
+
+    <form method="post" action="{{ url_for('register.submit') }}" class="card mt-6 grid gap-4 p-6 sm:grid-cols-2" novalidate>
+      {{ csrf_field() }}
+      {{ ui.field('prenom', 'Prénom', old.prenom ?? '', errors.prenom ?? null, 'text', {required: true, maxlength: 100, autocomplete: 'given-name'}) }}
+      {{ ui.field('nom', 'Nom', old.nom ?? '', errors.nom ?? null, 'text', {required: true, maxlength: 100, autocomplete: 'family-name'}) }}
+      <div class="sm:col-span-2">
+        {{ ui.field('email', 'Email', old.email ?? '', errors.email ?? null, 'email', {required: true, autocomplete: 'email'}) }}
+      </div>
+      {{ ui.field('telephone', 'Téléphone (facultatif)', old.telephone ?? '', errors.telephone ?? null, 'tel', {maxlength: 20, autocomplete: 'tel'}) }}
+      {{ ui.field('date_naissance', 'Date de naissance (facultatif)', old.date_naissance ?? '', errors.date_naissance ?? null, 'date', {max: 'now'|date('Y-m-d')}) }}
+      {{ ui.field('password', 'Mot de passe', '', errors.password ?? null, 'password', {required: true, minlength: 8, autocomplete: 'new-password'}) }}
+      {{ ui.field('password_confirm', 'Confirmation', '', errors.password_confirm ?? null, 'password', {required: true, autocomplete: 'new-password'}) }}
+      <p class="text-xs text-zinc-500 sm:col-span-2">Au moins 8 caractères, dont une lettre et un chiffre.</p>
+      <button type="submit" class="btn-primary sm:col-span-2">Créer mon compte</button>
+    </form>
+  </div>
+{% endblock %}
