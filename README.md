@@ -6,14 +6,16 @@ Le projet modélise les stations, les bornes, la flotte de vélos mécaniques et
 
 ## Fonctionnalités
 
-### Interface web actuellement disponible
+### Interface web (Slim 4 + Twig + Tailwind CSS)
 
-- consultation des stations, des vélos, des locations, des historiques et des signalements
-- indicateurs du réseau : nombre de stations, vélos, locations, recettes et durée moyenne
-- suivi de l’occupation des stations et filtrage des vélos par type
-- enregistrement d’un emprunt et d’une restitution
-- calcul automatique de la durée et du coût d’une location par trigger
-- création et consultation de signalements concernant un vélo ou une station.
+| Rôle | Pages |
+|---|---|
+| Visiteur | accueil avec la disponibilité du réseau, inscription, connexion |
+| Usager | tableau de bord, stations en temps réel, emprunt et restitution d’un vélo avec coût estimé en direct, historique des trajets, abonnement (souscription, renouvellement, résiliation, factures), signalements, profil |
+| Opérateur | tableau de bord d’exploitation, flotte (filtres, fiche vélo avec historiques d’état et de position), toutes les locations (filtres par date, statut, station, type, usager), file des signalements, statistiques avec graphiques et exports CSV, propositions de rééquilibrage |
+| Administrateur | droits de l’opérateur, plus la gestion des stations (création, modification, ajout et mise hors service de bornes, suppression) et des comptes (recherche, création d’opérateurs) |
+
+Sécurité : mots de passe hachés avec bcrypt, régénération de la session à la connexion, limitation des tentatives de connexion, jeton CSRF sur chaque formulaire, contrôle d’accès par rôle, requêtes préparées uniquement, échappement automatique de Twig, en-têtes HTTP de sécurité et compte MySQL dédié en moindre privilège.
 
 ### Base de données
 
@@ -23,7 +25,7 @@ Le projet modélise les stations, les bornes, la flotte de vélos mécaniques et
 - procédures stockées pour les abonnements, locations, maintenance, rééquilibrage et statistiques
 - triggers pour l’historisation, la validation des locations et la facturation.
 
-La base contient également les structures nécessaires à l’authentification, à la maintenance et à la régulation. L’interface web est volontairement limitée au périmètre minimal du projet.
+Les règles métier restent dans la base : l’application appelle les procédures stockées (`sp_emprunter_velo`, `sp_rendre_velo`, `sp_souscrire_abonnement`, `sp_stat_*`…) et affiche tels quels les messages d’erreur levés par `SIGNAL`.
 
 ## Aperçu
 
@@ -41,83 +43,91 @@ La base contient également les structures nécessaires à l’authentification,
 
 ## Prérequis
 
-- **MySQL 8** ou **MariaDB**
-- **PHP 8.0 ou supérieur** avec l’extension `pdo_mysql` activée
-- le client MySQL en ligne de commande est facultatif.
+- **MySQL 8** (ou MariaDB 10.6+), ici sur le port **3307**
+- **PHP 8.2 ou supérieur** avec les extensions `pdo_mysql` et `mbstring`
+- **Composer**
+- une connexion Internet pour les CDN (Tailwind CSS, Chart.js, police Inter).
 
 ## Installation
 
-### 1. Créer la base de données
+### 1. Créer la base de données (compte root)
 
-Exécuter les scripts SQL dans cet ordre :
+Exécuter les scripts dans cet ordre :
 
 1. [`database/schema.sql`](database/schema.sql) : base, tables, contraintes et index
 2. [`database/triggers.sql`](database/triggers.sql) : automatisation et historisation
-3. [`database/procedures.sql`](database/procedures.sql) : procédures métier et statistiques.
-
-Avec le client MySQL :
+3. [`database/procedures.sql`](database/procedures.sql) : vue, procédures métier et statistiques
+4. [`database/seed.sql`](database/seed.sql), puis `CALL sp_seed_petit();` (ou `sp_seed_demo()`) : données factices
+5. [`database/app_user.sql`](database/app_user.sql) : compte applicatif `velo_app`. **Remplacez d’abord `CHANGER_CE_MOT_DE_PASSE`.**
+6. [`database/demo_accounts.sql`](database/demo_accounts.sql) : un compte de démonstration par rôle.
 
 ```bash
-mysql -u root -p < database/schema.sql
-mysql -u root -p < database/triggers.sql
-mysql -u root -p < database/procedures.sql
+mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/schema.sql
+mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/triggers.sql
+mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/procedures.sql
+mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/seed.sql
+mysql -h 127.0.0.1 -P 3307 -u root -p velo_libre_service -e "CALL sp_seed_petit();"
+mysql -h 127.0.0.1 -P 3307 -u root -p < database/app_user.sql
+mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/demo_accounts.sql
 ```
 
-Sous PowerShell, l’équivalent est :
+Sous PowerShell, remplacez `< fichier.sql` par `Get-Content fichier.sql -Raw | mysql ...`.
 
-```powershell
-Get-Content database\schema.sql -Raw | mysql -u root -p
-Get-Content database\triggers.sql -Raw | mysql -u root -p
-Get-Content database\procedures.sql -Raw | mysql -u root -p
+### 2. Configurer l’application
+
+```bash
+composer install
+cp .env.example .env      # puis renseigner DB_PASS (mot de passe de velo_app)
 ```
 
-Les scripts ne fournissent pas de jeu de données de démonstration. Ajoutez des données factices dans `velo_libre_service` avant d’utiliser l’interface.
-
-### 2. Configurer la connexion PHP
-
-Modifier les quatre paramètres de connexion dans [`src/includes/db.php`](src/includes/db.php) :
-
-```php
-$hote = 'localhost';
-$base = 'velo_libre_service';
-$user = 'root';
-$mdp  = '';
-```
-
-Pour un usage réel, utilisez un compte MySQL dédié et ne conservez pas ses identifiants dans le dépôt.
+Le fichier `.env` n’est pas versionné. L’application se connecte uniquement avec `velo_app`, jamais avec `root`.
 
 ### 3. Lancer l’interface
 
-Depuis la racine du dépôt :
-
 ```bash
-php -S localhost:8000 -t src
+composer start            # équivaut à : php -S localhost:8000 -t public
 ```
 
-Puis ouvrir <http://localhost:8000>.
+Puis ouvrir <http://localhost:8000>. Comptes de démonstration (mot de passe `Demo1234!`) :
 
-Les pages principales sont :
+| Email | Rôle |
+|---|---|
+| `admin@velo.local` | administrateur |
+| `operateur@velo.local` | opérateur de maintenance |
+| `usager@velo.local` | usager (souscrire un abonnement avant d’emprunter) |
 
-- [`index.php`](src/index.php) : tableaux de données
-- [`fonctionnalites.php`](src/fonctionnalites.php) : indicateurs, locations,
-  filtres et signalements.
+Avec Apache, faites pointer le `DocumentRoot` sur `public/` : le fichier `.htaccess` redirige les requêtes vers `index.php`. En production, mettez `APP_ENV=prod` et `APP_DEBUG=false` pour masquer les erreurs et activer les caches.
 
 ## Organisation du dépôt
 
 ```text
+config/
+├── settings.php        # Paramètres lus depuis .env
+├── container.php       # Conteneur PHP-DI (PDO, Twig)
+├── middleware.php      # Erreurs, en-têtes, Twig, session, CSRF, routage
+└── routes.php          # Routes groupées par rôle
 database/
-├── schema.sql       # Schéma relationnel et contraintes
-├── triggers.sql     # Triggers d’intégrité et d’historisation
-└── procedures.sql   # Procédures métier et statistiques
-docs/
-├── diagrams/        # Diagrammes UML, conceptuel et logique
-└── instructions/   # Sujet du projet
+├── schema.sql          # Schéma relationnel et contraintes
+├── triggers.sql        # Triggers d’intégrité et d’historisation
+├── procedures.sql      # Vue, procédures métier et statistiques
+├── seed.sql            # Génération de données factices
+├── app_user.sql        # Compte MySQL applicatif (moindre privilège)
+└── demo_accounts.sql   # Comptes de démonstration
+docs/                   # Sujet, diagrammes et rapport
+public/
+└── index.php           # Point d’entrée unique
 src/
-├── index.php
-├── fonctionnalites.php
-├── includes/        # Connexion et composants communs
-└── assets/          # Feuille de style
+├── Controller/         # Contrôleurs (un par domaine)
+├── Repository/         # Toutes les requêtes SQL et les appels de procédures
+├── Database/           # Accès PDO et traduction des erreurs SQL
+├── Middleware/         # Session, CSRF, contrôle d’accès, en-têtes
+├── Security/           # Authentification et jeton CSRF
+├── Support/            # Session et messages flash
+└── Twig/               # Filtres et fonctions des templates
+templates/              # Vues Twig (layout Tailwind, composants, pages)
 ```
+
+Les requêtes principales se trouvent dans `src/Repository/`, ce qui facilite le rapport de performances. La page *Statistiques* affiche aussi le temps d’exécution de chaque procédure appelée.
 
 ## Documentation du projet
 
