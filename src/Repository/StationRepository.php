@@ -105,6 +105,16 @@ final class StationRepository
         );
     }
 
+    /**
+     * Toutes les stations (identifiant et nom) pour les listes de filtres.
+     * Lecture directe de STATION (index uq_station_nom, déjà trié) : contrairement à
+     * options(), n'agrège pas bornes et vélos de tout le réseau via la vue.
+     */
+    public function names(): array
+    {
+        return $this->db->fetchAll('SELECT id_station, nom FROM station ORDER BY nom');
+    }
+
     /** Création d'une station et de ses bornes numérotées 1..n (transaction). */
     public function create(array $data, int $nbBornes): int
     {

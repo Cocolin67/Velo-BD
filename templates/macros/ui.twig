@@ -63,6 +63,27 @@
   {% endif %}
 {% endmacro %}
 
+{# Pagination d'un tableau parmi plusieurs sur la même page : chaque tableau a son
+   propre paramètre ($param) ; anchor ramène l'utilisateur au tableau concerné.
+   p = résultat de StatsController::paginate (rows, page, has_next, total, from, to) #}
+{% macro pager(route, p, query, param, anchor = null) %}
+  {% if p.total > 0 %}
+    <div class="flex items-center justify-between border-t border-zinc-200 px-4 py-2.5 text-xs">
+      <span class="text-zinc-500 tabular-nums">{{ p.from }}–{{ p.to }} sur {{ p.total }}</span>
+      {% if p.page > 1 or p.has_next %}
+        <div class="flex gap-2">
+          {% if p.page > 1 %}
+            <a class="btn-secondary" href="{{ url_for(route, {}, query|merge({(param): p.page - 1})) }}{{ anchor ? '#' ~ anchor }}">← Préc.</a>
+          {% endif %}
+          {% if p.has_next %}
+            <a class="btn-secondary" href="{{ url_for(route, {}, query|merge({(param): p.page + 1})) }}{{ anchor ? '#' ~ anchor }}">Suiv. →</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
 {# Barre de progression (taux entre 0 et 1) #}
 {% macro meter(ratio) %}
   {% set p = ((ratio ?? 0) * 100)|round %}

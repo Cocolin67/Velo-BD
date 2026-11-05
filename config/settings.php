@@ -25,6 +25,15 @@ return [
         // Cache compilé uniquement en production (rechargement immédiat en dev)
         'cache' => $env === 'prod' ? dirname(__DIR__) . '/var/cache/twig' : false,
     ],
+    // Cache des statistiques (durées de vie en secondes)
+    'cache' => [
+        'path'     => dirname(__DIR__) . '/var/cache/app',
+        'ttl'      => [
+            'historique' => 3600,   // période entièrement passée : les chiffres ne bougent presque plus
+            'recent'     => 300,    // période incluant aujourd'hui
+            'temps_reel' => 30,     // occupation actuelle des stations (rééquilibrage)
+        ],
+    ],
     'session' => [
         'name'     => 'velo_session',
         'lifetime' => 0,          // cookie de session (supprimé à la fermeture du navigateur)

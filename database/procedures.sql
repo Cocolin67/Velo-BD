@@ -983,39 +983,68 @@ BEGIN
      ORDER BY s.id_station, heure;
 END$$
 
--- Recettes par formule : factures encaissées et en attente sur la période d'émission
+-- Recettes par formule : factures encaissées et en attente sur la période d'émission.
+-- Optimisation : on part des FACTURES de la période (index idx_facture_date, plage de dates)
+-- puis on remonte à l'abonnement par sa clé primaire. L'ancienne version partait de
+-- formule -> abonnement et parcourait donc TOUS les abonnements, quelle que soit la période.
 DROP PROCEDURE IF EXISTS sp_stat_recettes_par_formule$$
 CREATE PROCEDURE sp_stat_recettes_par_formule(IN p_debut DATETIME, IN p_fin DATETIME)
 BEGIN
     SELECT fo.id_formule,
            fo.libelle,
-           COUNT(f.id_facture) AS nb_factures,
-           COALESCE(SUM(CASE WHEN f.statut_paiement = 'payee'      THEN f.montant_total END), 0)
-                               AS recettes_encaissees,
-           COALESCE(SUM(CASE WHEN f.statut_paiement = 'en_attente' THEN f.montant_total END), 0)
-                               AS en_attente
+           COALESCE(x.nb_factures, 0)         AS nb_factures,
+           COALESCE(x.recettes_encaissees, 0) AS recettes_encaissees,
+           COALESCE(x.en_attente, 0)          AS en_attente
       FROM formule fo
-      LEFT JOIN abonnement a ON a.id_formule = fo.id_formule
-      LEFT JOIN facture    f ON f.id_abonnement = a.id_abonnement
-                            AND f.date_emission >= p_debut AND f.date_emission < p_fin
-     GROUP BY fo.id_formule, fo.libelle
+      LEFT JOIN (SELECT a.id_formule,
+                        COUNT(*) AS nb_factures,
+                        SUM(CASE WHEN f.statut_paiement = 'payee'      THEN f.montant_total ELSE 0 END)
+                                 AS recettes_encaissees,
+                        SUM(CASE WHEN f.statut_paiement = 'en_attente' THEN f.montant_total ELSE 0 END)
+                                 AS en_attente
+                   FROM facture f
+                   JOIN abonnement a ON a.id_abonnement = f.id_abonnement
+                  WHERE f.date_emission >= p_debut AND f.date_emission < p_fin
+                  GROUP BY a.id_formule) x
+        ON x.id_formule = fo.id_formule
      ORDER BY recettes_encaissees DESC, fo.libelle;
 END$$
 
 -- Taux d'indisponibilité de la flotte : part du temps passée « en atelier » ou « défectueux »,
 -- calculée à partir de HISTORIQUE_ETAT, par type de vélo et au total (ligne « tous »).
+--
+-- Optimisation : seules comptent les lignes de la période ET, pour chaque vélo, le
+-- dernier état connu avant p_debut (l'état dans lequel il entre dans la période).
+-- Ce dernier état est trouvé par une sous-requête corrélée servie par l'index
+-- idx_hist_etat_velo_date (id_velo, date_heure) en parcours descendant : une seule
+-- lecture d'index par vélo. L'ancienne version appliquait la fonction de fenêtre LEAD
+-- à tout l'historique antérieur à p_fin (des millions de lignes pour une période de 30 jours).
 DROP PROCEDURE IF EXISTS sp_stat_indisponibilite_flotte$$
 CREATE PROCEDURE sp_stat_indisponibilite_flotte(IN p_debut DATETIME, IN p_fin DATETIME)
 BEGIN
-    WITH periodes AS (
+    WITH bornes_hist AS (
+        -- changements d'état survenus pendant la période (index idx_hist_etat_velo_date / _etat_date)
+        SELECT h.id_hist_etat
+          FROM historique_etat h
+         WHERE h.date_heure >= p_debut AND h.date_heure < p_fin
+        UNION ALL
+        -- état de chaque vélo à l'ouverture de la période
+        SELECT (SELECT h.id_hist_etat
+                  FROM historique_etat h
+                 WHERE h.id_velo = v.id_velo AND h.date_heure < p_debut
+                 ORDER BY h.date_heure DESC, h.id_hist_etat DESC
+                 LIMIT 1)
+          FROM velo v
+    ),
+    periodes AS (
         SELECT h.id_velo,
                h.etat_velo,
                GREATEST(h.date_heure, p_debut) AS debut,
                LEAST(COALESCE(LEAD(h.date_heure) OVER (PARTITION BY h.id_velo
                                                        ORDER BY h.date_heure, h.id_hist_etat),
                               p_fin), p_fin)   AS fin
-          FROM historique_etat h
-         WHERE h.date_heure < p_fin
+          FROM bornes_hist b
+          JOIN historique_etat h ON h.id_hist_etat = b.id_hist_etat
     )
     SELECT COALESCE(v.type_velo, 'tous')       AS type_velo,
            COUNT(DISTINCT p.id_velo)           AS nb_velos,

@@ -30,7 +30,7 @@ final class ReportController extends Controller
     {
         $query = $request->getQueryParams();
         $data  = [
-            'stations' => $this->stations->options(),
+            'stations' => $this->stations->names(),
             'old'      => ['id_velo' => self::int($query, 'velo'), 'id_station' => self::int($query, 'station')],
         ];
 

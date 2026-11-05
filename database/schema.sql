@@ -112,8 +112,10 @@ CREATE TABLE releve_station (
     nb_velos_electriques SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     nb_bornes_libres     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (id_station, horodatage),
-    -- Taux de remplissage par tranche horaire, toutes stations confondues
-    KEY idx_releve_horodatage (horodatage),
+    -- Taux de remplissage par tranche horaire, toutes stations confondues.
+    -- Index couvrant pour sp_stat_remplissage_stations (lecture de l'index seul).
+    KEY idx_releve_horodatage (horodatage, id_station,
+                               nb_velos_mecaniques, nb_velos_electriques, nb_bornes_libres),
     CONSTRAINT fk_releve_station
         FOREIGN KEY (id_station) REFERENCES station (id_station)
         ON DELETE CASCADE
@@ -286,8 +288,12 @@ CREATE TABLE location (
     KEY idx_loc_velo_emprunt   (id_velo, date_heure_emprunt),
     -- Locations d'un abonnement / d'un usager ; couvre la clé étrangère id_abonnement
     KEY idx_loc_abo_emprunt    (id_abonnement, date_heure_emprunt),
-    -- Trajets par période, heures de pointe
-    KEY idx_loc_emprunt        (date_heure_emprunt),
+    -- Trajets par période, heures de pointe, origine-destination, indicateurs du jour.
+    -- Index COUVRANT : toutes les colonnes lues par sp_stat_trajets_par_periode,
+    -- sp_stat_heures_pointe et sp_stat_trajets_od y figurent, la table n'est donc
+    -- pas relue (pas d'accès à la clé primaire pour chaque trajet de la période).
+    KEY idx_loc_emprunt        (date_heure_emprunt, date_heure_restitution,
+                                id_borne_depart, id_borne_arrivee, duree_min, cout),
     -- Trajets origine-destination les plus fréquents ; couvre id_borne_depart
     KEY idx_loc_depart_arrivee (id_borne_depart, id_borne_arrivee),
     -- Arrivées par borne / station ; couvre id_borne_arrivee

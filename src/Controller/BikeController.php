@@ -45,7 +45,7 @@ final class BikeController extends Controller
             'filters'  => $filters,
             'query'    => array_filter($filters, static fn ($v) => $v !== null),
             'counts'   => $this->bikes->countByState(),
-            'stations' => $this->stations->options(),
+            'stations' => $this->stations->names(),
             'etats'    => BikeRepository::ETATS,
         ]);
     }

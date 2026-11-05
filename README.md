@@ -129,6 +129,8 @@ templates/              # Vues Twig (layout Tailwind, composants, pages)
 
 Les requêtes principales se trouvent dans `src/Repository/`, ce qui facilite le rapport de performances. La page *Statistiques* affiche aussi le temps d’exécution de chaque procédure appelée.
 
+La page *Statistiques* est découpée en onglets (seules les procédures de l’onglet affiché sont exécutées), ses tableaux sont paginés et ses résultats sont mis en cache dans `var/cache/app` (1 h pour une période passée, 5 min si elle inclut aujourd’hui, 30 s pour le temps réel ; durées réglables dans `config/settings.php`). Le lien « Recalculer sans le cache » permet de mesurer le temps réel des procédures.
+
 ## Documentation du projet
 
 Le sujet et les livrables graphiques sont disponibles dans [`docs/`](docs/). Les commentaires présents dans les scripts SQL détaillent les choix de modélisation, les contraintes et les index.

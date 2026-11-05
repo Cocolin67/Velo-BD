@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Database\Database;
+use App\Repository\StatsRepository;
+use App\Support\Cache;
 use App\Twig\AppExtension;
 use App\Twig\SecurityExtension;
 use Psr\Container\ContainerInterface;
@@ -16,7 +18,13 @@ return [
 
     Database::class => static fn (ContainerInterface $c): Database => new Database($c->get('settings')['db']),
 
-    ResponseFactoryInterface::class => static fn (): ResponseFactoryInterface => new ResponseFactory(),
+    Cache::class => static fn (ContainerInterface $c): Cache => new Cache($c->get('settings')['cache']['path']),
+
+    StatsRepository::class => static fn (ContainerInterface $c): StatsRepository => new StatsRepository(
+        $c->get(Database::class), $c->get(Cache::class), $c->get('settings')['cache']['ttl'],
+    ),
+
+    ResponseFactoryInterface::class =>static fn (): ResponseFactoryInterface => new ResponseFactory(),
 
     Twig::class => static function (ContainerInterface $c): Twig {
         $settings = $c->get('settings');

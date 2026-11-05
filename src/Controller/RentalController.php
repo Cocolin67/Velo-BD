@@ -108,7 +108,7 @@ final class RentalController extends Controller
             'page'     => $page,
             'filters'  => $filters,
             'query'    => array_filter($filters, static fn ($v) => $v !== null && $v !== ''),
-            'stations' => $this->stations->options(),
+            'stations' => $this->stations->names(),
         ]);
     }
 }
