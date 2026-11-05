@@ -19,7 +19,10 @@
         }
     },
     "scripts": {
-        "start": "php -S localhost:8000 -t public",
+        "start": [
+            "Composer\\Config::disableProcessTimeout",
+            "php -S localhost:8000 -t public"
+        ],
         "check-db": "php bin/check-db.php"
     },
     "config": {
