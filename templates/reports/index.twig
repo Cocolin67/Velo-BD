@@ -1,0 +1,86 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Signalements{% endblock %}
+
+{% block content %}
+  {% set staff = is_granted('operateur') %}
+  {{ ui.page_header('Signalements', staff ? 'File de traitement des problèmes signalés par les usagers.' : 'Un problème sur un vélo ou une station ? Prévenez-nous.') }}
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    {# ---- Nouveau signalement #}
+    <form method="post" action="{{ url_for('reports.create') }}" class="card h-fit space-y-4 p-6">
+      {{ csrf_field() }}
+      <h2 class="font-semibold">Nouveau signalement</h2>
+      <div>
+        <label for="f-velo" class="label">Numéro du vélo</label>
+        <input id="f-velo" name="id_velo" type="number" min="1" value="{{ old.id_velo }}" class="input" placeholder="ex. 128">
+      </div>
+      <div class="flex items-center gap-3 text-xs text-zinc-400"><span class="h-px flex-1 bg-zinc-200"></span>ou<span class="h-px flex-1 bg-zinc-200"></span></div>
+      <div>
+        <label for="f-station" class="label">Station</label>
+        <select id="f-station" name="id_station" class="input">
+          <option value="">—</option>
+          {% for s in stations %}<option value="{{ s.id_station }}" {{ old.id_station == s.id_station ? 'selected' }}>{{ s.nom }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="f-desc" class="label">Description</label>
+        <textarea id="f-desc" name="description" rows="4" maxlength="1000" required class="input" placeholder="Pneu crevé, frein défaillant, borne bloquée…"></textarea>
+      </div>
+      <button class="btn-primary w-full">Envoyer</button>
+    </form>
+
+    {# ---- Liste #}
+    <div class="lg:col-span-2">
+      {% if staff %}
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          {% set statuts = {'': 'Tous', ouvert: 'Ouverts', pris_en_charge: 'Pris en charge', clos: 'Clos'} %}
+          {% for value, text in statuts %}
+            {% set active = (filters.statut ?? '') == value %}
+            <a href="{{ url_for('reports', {}, {statut: value, cible: filters.cible ?? ''}|filter(v => v)) }}"
+               class="rounded-full px-3 py-1 text-sm {{ active ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50' }}">
+              {{ text }}{% if value %} <span class="opacity-60">{{ counts[value] }}</span>{% endif %}
+            </a>
+          {% endfor %}
+          <form method="get" class="ml-auto">
+            {% if filters.statut %}<input type="hidden" name="statut" value="{{ filters.statut }}">{% endif %}
+            <select name="cible" class="input py-1.5" onchange="this.form.submit()" aria-label="Cible">
+              <option value="">Vélos et stations</option>
+              <option value="velo" {{ filters.cible == 'velo' ? 'selected' }}>Vélos</option>
+              <option value="station" {{ filters.cible == 'station' ? 'selected' }}>Stations</option>
+            </select>
+          </form>
+        </div>
+      {% endif %}
+
+      <div class="card divide-y divide-zinc-100 overflow-hidden">
+        {% for r in reports %}
+          <article class="flex flex-wrap items-start justify-between gap-3 p-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2 text-sm">
+                {{ ui.badge(r.statut) }}
+                <span class="font-medium">
+                  {% if r.id_velo %}Vélo #{{ r.id_velo }}{% else %}{{ r.station }}{% endif %}
+                </span>
+                <span class="text-xs text-zinc-400">#{{ r.id_signalement }} · {{ r.date_heure|dt }}{% if staff %} · {{ r.prenom }} {{ r.nom }}{% endif %}</span>
+              </div>
+              <p class="mt-1.5 text-sm text-zinc-600">{{ r.description }}</p>
+            </div>
+            {% if staff and r.statut != 'clos' %}
+              <div class="flex gap-2">
+                {% if r.statut == 'ouvert' %}
+                  <form method="post" action="{{ url_for('reports.take', {id: r.id_signalement}) }}">{{ csrf_field() }}<button class="btn-secondary">Prendre en charge</button></form>
+                {% endif %}
+                <form method="post" action="{{ url_for('reports.close', {id: r.id_signalement}) }}">{{ csrf_field() }}<button class="btn-ghost">Clore</button></form>
+              </div>
+            {% endif %}
+          </article>
+        {% else %}
+          {{ ui.empty(staff ? 'Aucun signalement dans cette catégorie.' : 'Vous n\'avez fait aucun signalement.') }}
+        {% endfor %}
+        {% if staff %}{{ ui.pagination('reports', page, has_next, query) }}{% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

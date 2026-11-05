@@ -6,6 +6,7 @@ use App\Controller\AuthController;
 use App\Controller\HomeController;
 use App\Controller\ProfileController;
 use App\Controller\RentalController;
+use App\Controller\ReportController;
 use App\Controller\StationController;
 use App\Controller\StatsController;
 use App\Controller\SubscriptionController;
@@ -40,6 +41,9 @@ return static function (App $app): void {
 
         $g->get('/stations', [StationController::class, 'index'])->setName('stations');
         $g->get('/stations/{id:[0-9]+}', [StationController::class, 'show'])->setName('stations.show');
+
+        $g->get('/signalements', [ReportController::class, 'index'])->setName('reports');
+        $g->post('/signalements', [ReportController::class, 'create'])->setName('reports.create');
     })->add($require());
 
     // ---- Usagers
@@ -57,6 +61,8 @@ return static function (App $app): void {
     // ---- Opérateurs (et administrateurs, qui en héritent)
     $app->group('', function (RouteCollectorProxy $g): void {
         $g->get('/locations', [RentalController::class, 'admin'])->setName('rentals.admin');
+        $g->post('/signalements/{id:[0-9]+}/prise-en-charge', [ReportController::class, 'takeCharge'])->setName('reports.take');
+        $g->post('/signalements/{id:[0-9]+}/cloture', [ReportController::class, 'close'])->setName('reports.close');
         $g->get('/statistiques', [StatsController::class, 'index'])->setName('stats');
         $g->get('/statistiques/export/{rapport:[a-z-]+}.csv', [StatsController::class, 'export'])->setName('stats.export');
     })->add($require([Auth::OPERATEUR]));

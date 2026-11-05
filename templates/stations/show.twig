@@ -19,6 +19,7 @@
       </p>
     </div>
     <div class="flex flex-wrap gap-2">
+      <a href="{{ url_for('reports', {}, {station: station.id_station}) }}" class="btn-ghost">Signaler un problème</a>
       {% if is_granted('administrateur') %}
         <a href="{{ url_for('stations.edit', {id: station.id_station}) }}" class="btn-secondary">Modifier</a>
         <form method="post" action="{{ url_for('stations.delete', {id: station.id_station}) }}"

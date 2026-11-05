@@ -9,5 +9,10 @@
 {% endif %}
 {% if is_granted('operateur') %}
   {{ ui.nav_link('rentals.admin', 'Locations') }}
+{% endif %}
+{% if current_user() %}
+  {{ ui.nav_link('reports', 'Signalements') }}
+{% endif %}
+{% if is_granted('operateur') %}
   {{ ui.nav_link('stats', 'Statistiques') }}
 {% endif %}

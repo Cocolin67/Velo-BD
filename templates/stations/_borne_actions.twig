@@ -6,3 +6,4 @@
     <button class="btn-primary w-full">Emprunter</button>
   </form>
 {% endif %}
+<a href="{{ url_for('reports', {}, {velo: b.id_velo}) }}" class="text-xs text-zinc-500 hover:text-red-600">Signaler ce vélo</a>
