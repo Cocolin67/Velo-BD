@@ -3,3 +3,6 @@
 {% if current_user() %}
   {{ ui.nav_link('stations', 'Stations') }}
 {% endif %}
+{% if is_granted('usager') %}
+  {{ ui.nav_link('subscriptions', 'Abonnement') }}
+{% endif %}

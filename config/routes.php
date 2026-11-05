@@ -6,6 +6,7 @@ use App\Controller\AuthController;
 use App\Controller\HomeController;
 use App\Controller\ProfileController;
 use App\Controller\StationController;
+use App\Controller\SubscriptionController;
 use App\Middleware\RequireRole;
 use App\Security\Auth;
 use App\Support\Flash;
@@ -38,6 +39,14 @@ return static function (App $app): void {
         $g->get('/stations', [StationController::class, 'index'])->setName('stations');
         $g->get('/stations/{id:[0-9]+}', [StationController::class, 'show'])->setName('stations.show');
     })->add($require());
+
+    // ---- Usagers
+    $app->group('', function (RouteCollectorProxy $g): void {
+        $g->get('/abonnement', [SubscriptionController::class, 'index'])->setName('subscriptions');
+        $g->post('/abonnement', [SubscriptionController::class, 'subscribe'])->setName('subscriptions.subscribe');
+        $g->post('/abonnement/{id:[0-9]+}/renouveler', [SubscriptionController::class, 'renew'])->setName('subscriptions.renew');
+        $g->post('/abonnement/{id:[0-9]+}/resilier', [SubscriptionController::class, 'cancel'])->setName('subscriptions.cancel');
+    })->add($require([Auth::USAGER]));
 
     // ---- Administrateurs
     $app->group('', function (RouteCollectorProxy $g): void {

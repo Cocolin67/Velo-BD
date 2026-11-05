@@ -1,0 +1,115 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Mon abonnement{% endblock %}
+
+{% block content %}
+  {{ ui.page_header('Mon abonnement', 'Un abonnement valide est nécessaire pour emprunter un vélo.') }}
+
+  {% if current %}
+    <section class="card mb-8 flex flex-wrap items-center justify-between gap-4 border-emerald-200 bg-emerald-50/50 p-6">
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold">{{ current.libelle }}</h2>
+          {{ ui.badge('actif') }}
+        </div>
+        <p class="mt-1 text-sm text-zinc-600">
+          Valable jusqu'au <strong>{{ current.date_fin|dt }}</strong>
+          · {{ current.duree_gratuite_min }} min gratuites par trajet
+          · supplément électrique {{ current.supplement_electrique|money }}
+        </p>
+        <p class="mt-1 text-xs text-zinc-500">
+          Renouvellement automatique : {{ current.renouvellement_auto ? 'activé' : 'désactivé' }}
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <form method="post" action="{{ url_for('subscriptions.renew', {id: current.id_abonnement}) }}">
+          {{ csrf_field() }}<button class="btn-secondary">Renouveler</button>
+        </form>
+        <form method="post" action="{{ url_for('subscriptions.cancel', {id: current.id_abonnement}) }}"
+              onsubmit="return confirm('Résilier votre abonnement dès maintenant ?')">
+          {{ csrf_field() }}<button class="btn-danger">Résilier</button>
+        </form>
+      </div>
+    </section>
+  {% endif %}
+
+  <h2 class="mb-3 font-semibold">{{ current ? 'Nos formules' : 'Choisir une formule' }}</h2>
+  <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {% for f in formules %}
+      <form method="post" action="{{ url_for('subscriptions.subscribe') }}" class="card flex flex-col p-5">
+        {{ csrf_field() }}
+        <input type="hidden" name="id_formule" value="{{ f.id_formule }}">
+        <h3 class="font-semibold">{{ f.libelle }}</h3>
+        <p class="mt-2 text-3xl font-semibold tracking-tight">{{ f.prix|money }}</p>
+        <p class="text-xs text-zinc-500">pour {{ f.duree_validite_jours }} jour{{ f.duree_validite_jours > 1 ? 's' }}</p>
+        <ul class="mt-4 flex-1 space-y-1.5 text-sm text-zinc-600">
+          <li>✓ {{ f.duree_gratuite_min }} min gratuites par trajet</li>
+          {% for t in f.tranches %}
+            {% if loop.last %}
+              <li>· puis {{ t.tarif_tranche|money }} par tranche de {{ t.duree_tranche_min }} min</li>
+            {% else %}
+              <li>· {{ t.tarif_tranche|money }} les {{ t.duree_tranche_min }} min suivantes</li>
+            {% endif %}
+          {% endfor %}
+          <li>· + {{ f.supplement_electrique|money }} en vélo électrique</li>
+        </ul>
+        {% if not current %}
+          <label class="mt-4 flex items-center gap-2 text-xs text-zinc-600">
+            <input type="checkbox" name="renouvellement_auto" value="1" class="rounded border-zinc-300 text-emerald-600">
+            Renouvellement automatique
+          </label>
+          <button class="btn-primary mt-3">Souscrire</button>
+        {% endif %}
+      </form>
+    {% endfor %}
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <section class="card overflow-hidden">
+      <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Historique des abonnements</h2>
+      {% if history is empty %}
+        {{ ui.empty('Aucun abonnement pour le moment.') }}
+      {% else %}
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead class="bg-zinc-50"><tr><th>Formule</th><th>Période</th><th>Statut</th></tr></thead>
+            <tbody class="divide-y divide-zinc-100">
+              {% for a in history %}
+                <tr>
+                  <td>{{ a.libelle }}</td>
+                  <td class="text-xs">{{ a.date_debut|d }} → {{ a.date_fin|d }}</td>
+                  <td>{{ ui.badge(a.statut) }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="card overflow-hidden">
+      <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Dernières factures</h2>
+      {% if invoices is empty %}
+        {{ ui.empty('Aucune facture.') }}
+      {% else %}
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead class="bg-zinc-50"><tr><th>N°</th><th>Date</th><th>Objet</th><th class="text-right">Montant</th><th>Paiement</th></tr></thead>
+            <tbody class="divide-y divide-zinc-100">
+              {% for i in invoices %}
+                <tr>
+                  <td class="tabular-nums text-zinc-500">#{{ i.id_facture }}</td>
+                  <td>{{ i.date_emission|d }}</td>
+                  <td>{{ i.libelle }}</td>
+                  <td class="text-right tabular-nums">{{ i.montant_total|money }}</td>
+                  <td>{{ ui.badge(i.statut_paiement) }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}
