@@ -2,3 +2,7 @@
 *.synctex.gz
 *.log
 *.aux
+# Application PHP
+/vendor/
+/var/
+.env

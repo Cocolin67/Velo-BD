@@ -1,0 +1,84 @@
+{% import 'macros/ui.twig' as ui %}
+<!doctype html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Accueil{% endblock %} · {{ app_name }}</title>
+  <link rel="icon" href="{{ base_path() }}/favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+  <style type="text/tailwindcss">
+    @theme {
+      --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    }
+    @layer components {
+      .card     { @apply rounded-2xl border border-zinc-200 bg-white shadow-sm; }
+      .btn      { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 disabled:opacity-50; }
+      .btn-primary   { @apply btn bg-emerald-600 text-white hover:bg-emerald-700; }
+      .btn-secondary { @apply btn border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50; }
+      .btn-danger    { @apply btn border border-red-200 bg-white text-red-600 hover:bg-red-50; }
+      .btn-ghost     { @apply btn text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900; }
+      .label    { @apply mb-1.5 block text-sm font-medium text-zinc-700; }
+      .input    { @apply block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20; }
+      .table    { @apply min-w-full divide-y divide-zinc-200 text-sm; }
+      .table th { @apply px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500; }
+      .table td { @apply whitespace-nowrap px-4 py-3 text-zinc-700; }
+      .table tbody tr { @apply hover:bg-zinc-50/70; }
+      .link     { @apply font-medium text-emerald-700 hover:text-emerald-800 hover:underline; }
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-full bg-zinc-50 font-sans text-zinc-900 antialiased">
+  <header class="sticky top-0 z-30 border-b border-zinc-200 bg-white/85 backdrop-blur">
+    <div class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+      <a href="{{ url_for('home') }}" class="flex items-center gap-2 font-semibold tracking-tight">
+        <span class="grid size-8 place-items-center rounded-lg bg-emerald-600 text-white">
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-3 11.5V14l-3-3 4-3 2 3h2"/></svg>
+        </span>
+        <span class="hidden sm:inline">{{ app_name }}</span>
+      </a>
+
+      <nav class="hidden flex-1 items-center gap-1 md:flex">
+        {% block nav %}{% include 'partials/nav.twig' %}{% endblock %}
+      </nav>
+
+      <div class="ml-auto flex items-center gap-2">
+        {% include 'partials/account.twig' %}
+        <details class="relative md:hidden">
+          <summary class="btn-ghost cursor-pointer list-none" aria-label="Menu">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </summary>
+          <nav class="card absolute right-0 mt-2 flex w-56 flex-col gap-1 p-2">
+            {% include 'partials/nav.twig' %}
+          </nav>
+        </details>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-8">
+    {% for flash in flashes() %}
+      {% set styles = {
+        success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+        error:   'border-red-200 bg-red-50 text-red-800',
+        info:    'border-sky-200 bg-sky-50 text-sky-800'
+      } %}
+      <div class="mb-4 rounded-xl border px-4 py-3 text-sm {{ styles[flash.type] }}" role="{{ flash.type == 'error' ? 'alert' : 'status' }}">
+        {{ flash.message }}
+      </div>
+    {% endfor %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="mx-auto max-w-6xl px-4 pb-10 pt-4 text-xs text-zinc-400">
+    {{ app_name }} · Projet BD70 · UTBM
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

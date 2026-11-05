@@ -1,0 +1,76 @@
+{# ---------------------------------------------------------------------------
+   Composants d'interface réutilisables
+   --------------------------------------------------------------------------- #}
+
+{# Lien de navigation, actif si l'URL courante est la route (ou une sous-page) #}
+{% macro nav_link(route, label) %}
+  {% set url = url_for(route) %}
+  {% set path = current_url() %}
+  {% set active = route == 'home' ? path == url : (path == url or path starts with url ~ '/') %}
+  <a href="{{ url }}"
+     class="rounded-lg px-3 py-1.5 text-sm font-medium transition {{ active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900' }}"
+     {% if active %}aria-current="page"{% endif %}>{{ label }}</a>
+{% endmacro %}
+
+{# Pastille colorée pour une valeur ENUM (voir les filtres label et tone) #}
+{% macro badge(value, text = null) %}
+  {% set tones = {
+    green: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+    blue:  'bg-sky-50 text-sky-700 ring-sky-600/20',
+    amber: 'bg-amber-50 text-amber-800 ring-amber-600/20',
+    red:   'bg-red-50 text-red-700 ring-red-600/20',
+    zinc:  'bg-zinc-100 text-zinc-600 ring-zinc-500/20'
+  } %}
+  <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset {{ tones[value|tone] }}">{{ text ?? value|label }}</span>
+{% endmacro %}
+
+{# Carte d'indicateur #}
+{% macro stat(label, value, hint = null) %}
+  <div class="card p-5">
+    <p class="text-sm text-zinc-500">{{ label }}</p>
+    <p class="mt-1 text-2xl font-semibold tracking-tight">{{ value }}</p>
+    {% if hint %}<p class="mt-1 text-xs text-zinc-400">{{ hint }}</p>{% endif %}
+  </div>
+{% endmacro %}
+
+{# En-tête de page : titre, sous-titre et zone d'actions (bloc HTML déjà échappé) #}
+{% macro page_header(title, subtitle = null) %}
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold tracking-tight">{{ title }}</h1>
+    {% if subtitle %}<p class="mt-1 text-sm text-zinc-500">{{ subtitle }}</p>{% endif %}
+  </div>
+{% endmacro %}
+
+{# État vide #}
+{% macro empty(message) %}
+  <div class="px-6 py-12 text-center text-sm text-zinc-500">{{ message }}</div>
+{% endmacro %}
+
+{# Pagination précédent / suivant (pas de COUNT(*) coûteux sur les grosses tables) #}
+{% macro pagination(route, page, has_next, query = {}, args = {}) %}
+  {% if page > 1 or has_next %}
+    <div class="flex items-center justify-between border-t border-zinc-200 px-4 py-3 text-sm">
+      <span class="text-zinc-500">Page {{ page }}</span>
+      <div class="flex gap-2">
+        {% if page > 1 %}
+          <a class="btn-secondary" href="{{ url_for(route, args, query|merge({page: page - 1})) }}">← Précédent</a>
+        {% endif %}
+        {% if has_next %}
+          <a class="btn-secondary" href="{{ url_for(route, args, query|merge({page: page + 1})) }}">Suivant →</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{# Barre de progression (taux entre 0 et 1) #}
+{% macro meter(ratio) %}
+  {% set p = ((ratio ?? 0) * 100)|round %}
+  {% set color = p >= 85 ? 'bg-red-500' : (p <= 15 ? 'bg-amber-500' : 'bg-emerald-500') %}
+  <div class="flex items-center gap-2">
+    <div class="h-1.5 w-20 overflow-hidden rounded-full bg-zinc-100">
+      <div class="h-full rounded-full {{ color }}" style="width: {{ min(p, 100) }}%"></div>
+    </div>
+    <span class="text-xs tabular-nums text-zinc-500">{{ p }} %</span>
+  </div>
+{% endmacro %}
