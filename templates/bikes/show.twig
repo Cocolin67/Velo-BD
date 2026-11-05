@@ -1,0 +1,82 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Vélo #{{ bike.id_velo }}{% endblock %}
+
+{% block content %}
+  <a href="{{ url_for('bikes') }}" class="text-sm text-zinc-500 hover:text-zinc-900">← Flotte</a>
+
+  <div class="mb-6 mt-3 flex flex-wrap items-center gap-3">
+    <h1 class="text-2xl font-semibold tracking-tight">Vélo #{{ bike.id_velo }}</h1>
+    {{ ui.badge(bike.type_velo) }}
+    {{ ui.badge(bike.etat_velo) }}
+  </div>
+
+  <section class="mb-8 grid gap-4 sm:grid-cols-3">
+    {{ ui.stat('Position actuelle', bike.station ?? bike.etat_velo|label, bike.station ? 'Borne ' ~ bike.num_borne : null) }}
+    {{ ui.stat('Batterie', bike.niveau_batterie is null ? '—' : bike.niveau_batterie ~ ' %', bike.type_velo == 'mecanique' ? 'Vélo mécanique' : null) }}
+    {{ ui.stat('Mis en service le', bike.date_mise_en_service|d) }}
+  </section>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <section class="card overflow-hidden">
+      <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Historique des états <span class="text-xs font-normal text-zinc-400">trigger trg_velo_au</span></h2>
+      <ol class="divide-y divide-zinc-100">
+        {% for h in states %}
+          <li class="flex items-center justify-between px-4 py-2.5 text-sm">{{ ui.badge(h.etat_velo) }}<span class="text-zinc-500">{{ h.date_heure|dt }}</span></li>
+        {% else %}<li>{{ ui.empty('Aucun historique.') }}</li>{% endfor %}
+      </ol>
+    </section>
+
+    <section class="card overflow-hidden">
+      <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Historique des positions</h2>
+      <ol class="divide-y divide-zinc-100">
+        {% for p in positions %}
+          <li class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+            <span>{% if p.station %}{{ p.station }} <span class="text-xs text-zinc-400">borne {{ p.num_borne }}</span>{% else %}{{ p.type_position|label }}{% endif %}</span>
+            <span class="text-right text-xs text-zinc-500">{{ p.date_heure_debut|dt }} → {{ p.date_heure_fin ? p.date_heure_fin|dt : 'maintenant' }}</span>
+          </li>
+        {% else %}<li>{{ ui.empty('Aucun historique.') }}</li>{% endfor %}
+      </ol>
+    </section>
+
+    <section class="card overflow-hidden">
+      <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Dernières locations</h2>
+      {% if rentals is empty %}{{ ui.empty('Aucune location.') }}{% else %}
+        <div class="overflow-x-auto">
+          <table class="table">
+            <tbody class="divide-y divide-zinc-100">
+              {% for l in rentals %}
+                <tr>
+                  <td>{{ l.date_heure_emprunt|dt }}</td>
+                  <td>{{ l.station_depart }} <span class="text-zinc-400">→</span> {{ l.station_arrivee ?? 'en cours' }}</td>
+                  <td class="text-right tabular-nums">{{ l.duree_min|duration }}</td>
+                  <td class="text-right tabular-nums">{{ l.cout|money }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="card overflow-hidden">
+      <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Maintenance et signalements</h2>
+      <ul class="divide-y divide-zinc-100 text-sm">
+        {% for i in interventions %}
+          <li class="px-4 py-2.5">
+            <div class="flex justify-between"><span class="font-medium">Intervention</span><span class="text-xs text-zinc-500">{{ i.date_retrait|d }} → {{ i.date_remise_circulation ? i.date_remise_circulation|d : 'en cours' }}</span></div>
+            <p class="text-zinc-600">{{ i.description_travaux }} <span class="text-xs text-zinc-400">· {{ i.prenom }} {{ i.nom }}</span></p>
+          </li>
+        {% endfor %}
+        {% for r in reports %}
+          <li class="px-4 py-2.5">
+            <div class="flex justify-between"><span>{{ ui.badge(r.statut) }} <span class="font-medium">Signalement #{{ r.id_signalement }}</span></span><span class="text-xs text-zinc-500">{{ r.date_heure|d }}</span></div>
+            <p class="text-zinc-600">{{ r.description }}</p>
+          </li>
+        {% endfor %}
+        {% if interventions is empty and reports is empty %}<li>{{ ui.empty('Aucune intervention ni signalement.') }}</li>{% endif %}
+      </ul>
+    </section>
+  </div>
+{% endblock %}

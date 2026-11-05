@@ -53,7 +53,11 @@
           {% if b.id_velo %}
             <div class="flex items-center justify-between text-sm">
               <span>
-                Vélo #{{ b.id_velo }}
+                {% if is_granted('operateur') %}
+                  <a class="link" href="{{ url_for('bikes.show', {id: b.id_velo}) }}">Vélo #{{ b.id_velo }}</a>
+                {% else %}
+                  Vélo #{{ b.id_velo }}
+                {% endif %}
                 <span class="text-zinc-500">· {{ b.type_velo|label }}</span>
               </span>
               {{ ui.badge(b.etat_velo) }}

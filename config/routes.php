@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controller\AuthController;
+use App\Controller\BikeController;
 use App\Controller\HomeController;
 use App\Controller\ProfileController;
 use App\Controller\RentalController;
@@ -61,6 +62,8 @@ return static function (App $app): void {
     // ---- Opérateurs (et administrateurs, qui en héritent)
     $app->group('', function (RouteCollectorProxy $g): void {
         $g->get('/locations', [RentalController::class, 'admin'])->setName('rentals.admin');
+        $g->get('/velos', [BikeController::class, 'index'])->setName('bikes');
+        $g->get('/velos/{id:[0-9]+}', [BikeController::class, 'show'])->setName('bikes.show');
         $g->post('/signalements/{id:[0-9]+}/prise-en-charge', [ReportController::class, 'takeCharge'])->setName('reports.take');
         $g->post('/signalements/{id:[0-9]+}/cloture', [ReportController::class, 'close'])->setName('reports.close');
         $g->get('/statistiques', [StatsController::class, 'index'])->setName('stats');

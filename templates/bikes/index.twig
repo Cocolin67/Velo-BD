@@ -1,0 +1,64 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Flotte{% endblock %}
+
+{% block content %}
+  {{ ui.page_header('Flotte', 'Position et état de chaque vélo.') }}
+
+  <section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {% for e in etats %}
+      <a href="{{ url_for('bikes', {}, {etat: e}) }}" class="card block p-5 transition hover:border-zinc-300 {{ filters.etat == e ? 'ring-2 ring-emerald-500/40' }}">
+        <p class="text-sm text-zinc-500">{{ e|label }}</p>
+        <p class="mt-1 text-2xl font-semibold tracking-tight">{{ counts[e]|num }}</p>
+      </a>
+    {% endfor %}
+  </section>
+
+  <form method="get" class="card mb-4 grid gap-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
+    <input type="number" name="id" min="1" value="{{ filters.id }}" placeholder="N° de vélo" class="input" aria-label="Numéro de vélo">
+    <select name="type" class="input" aria-label="Type">
+      <option value="">Tous les types</option>
+      <option value="mecanique" {{ filters.type == 'mecanique' ? 'selected' }}>Mécaniques</option>
+      <option value="electrique" {{ filters.type == 'electrique' ? 'selected' }}>Électriques</option>
+    </select>
+    <select name="etat" class="input" aria-label="État">
+      <option value="">Tous les états</option>
+      {% for e in etats %}<option value="{{ e }}" {{ filters.etat == e ? 'selected' }}>{{ e|label }}</option>{% endfor %}
+    </select>
+    <select name="station" class="input" aria-label="Station">
+      <option value="">Toutes les stations</option>
+      {% for s in stations %}<option value="{{ s.id_station }}" {{ filters.station == s.id_station ? 'selected' }}>{{ s.nom }}</option>{% endfor %}
+    </select>
+    <input type="number" name="batterie" min="0" max="100" value="{{ filters.batterie }}" placeholder="Batterie ≤ %" class="input" aria-label="Batterie maximale">
+    <div class="flex gap-2">
+      <button class="btn-primary">Filtrer</button>
+      {% if query %}<a href="{{ url_for('bikes') }}" class="btn-ghost">Effacer</a>{% endif %}
+    </div>
+  </form>
+
+  <div class="card overflow-hidden">
+    {% if bikes is empty %}
+      {{ ui.empty('Aucun vélo ne correspond à ces critères.') }}
+    {% else %}
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead class="bg-zinc-50"><tr><th>Vélo</th><th>Type</th><th>État</th><th>Batterie</th><th>Position</th><th>Mise en service</th></tr></thead>
+          <tbody class="divide-y divide-zinc-100">
+            {% for v in bikes %}
+              <tr>
+                <td><a class="link" href="{{ url_for('bikes.show', {id: v.id_velo}) }}">#{{ v.id_velo }}</a></td>
+                <td>{{ v.type_velo|label }}</td>
+                <td>{{ ui.badge(v.etat_velo) }}</td>
+                <td class="tabular-nums {{ v.niveau_batterie is not null and v.niveau_batterie < 20 ? 'text-red-600' }}">{{ v.niveau_batterie is null ? '—' : v.niveau_batterie ~ ' %' }}</td>
+                <td>{% if v.station %}{{ v.station }} <span class="text-xs text-zinc-400">borne {{ v.num_borne }}</span>{% else %}<span class="text-zinc-400">{{ v.etat_velo|label }}</span>{% endif %}</td>
+                <td>{{ v.date_mise_en_service|d }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {{ ui.pagination('bikes', page, has_next, query) }}
+    {% endif %}
+  </div>
+{% endblock %}

@@ -8,6 +8,7 @@
   {{ ui.nav_link('subscriptions', 'Abonnement') }}
 {% endif %}
 {% if is_granted('operateur') %}
+  {{ ui.nav_link('bikes', 'Flotte') }}
   {{ ui.nav_link('rentals.admin', 'Locations') }}
 {% endif %}
 {% if current_user() %}
