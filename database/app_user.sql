@@ -33,6 +33,11 @@
 CREATE USER IF NOT EXISTS 'velo_app'@'localhost' IDENTIFIED BY 'CHANGER_CE_MOT_DE_PASSE';
 CREATE USER IF NOT EXISTS 'velo_app'@'127.0.0.1' IDENTIFIED BY 'CHANGER_CE_MOT_DE_PASSE';
 
+-- IF NOT EXISTS ne modifie pas le mot de passe d'un compte déjà créé :
+-- ALTER USER l'impose, pour qu'il corresponde toujours à DB_PASS du fichier .env.
+ALTER USER 'velo_app'@'localhost' IDENTIFIED BY 'CHANGER_CE_MOT_DE_PASSE';
+ALTER USER 'velo_app'@'127.0.0.1' IDENTIFIED BY 'CHANGER_CE_MOT_DE_PASSE';
+
 -- Repart d'un état connu si le script est rejoué (REVOKE ne supprime pas le compte)
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'velo_app'@'localhost', 'velo_app'@'127.0.0.1';
 
