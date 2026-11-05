@@ -30,7 +30,4 @@ return [
         'lifetime' => 0,          // cookie de session (supprimé à la fermeture du navigateur)
         'idle'     => 3600,       // déconnexion après 1 h d'inactivité
     ],
-    'pagination' => [
-        'per_page' => 20,
-    ],
 ];

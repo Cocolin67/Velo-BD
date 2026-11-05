@@ -13,6 +13,9 @@ use Slim\Views\Twig;
 /** Outils communs aux contrôleurs : rendu Twig, redirections, lecture des formulaires. */
 abstract class Controller
 {
+    /** Lignes par page dans les listes paginées */
+    protected const PER_PAGE = 20;
+
     public function __construct(
         protected readonly Twig $view,
         protected readonly Flash $flash,

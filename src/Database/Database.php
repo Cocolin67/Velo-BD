@@ -176,8 +176,11 @@ final class Database
             // SIGNAL SQLSTATE '45000' : message métier écrit dans les triggers / procédures
             1644    => new BusinessException($message, 0, $e),
             1062    => new BusinessException('Cette valeur est déjà utilisée (doublon).', 0, $e),
-            1451    => new BusinessException('Suppression impossible : des données y font référence (historique conservé).', 0, $e),
-            1452    => new BusinessException('Référence inconnue : l\'élément lié n\'existe pas.', 0, $e),
+            // 1217 / 1216 : variantes de 1451 / 1452 renvoyées quand le compte ne voit pas la table liée
+            1451,
+            1217    => new BusinessException('Suppression impossible : des données y font référence (historique conservé).', 0, $e),
+            1452,
+            1216    => new BusinessException('Référence inconnue : l\'élément lié n\'existe pas.', 0, $e),
             3819    => new BusinessException('Données refusées par une contrainte d\'intégrité de la base.', 0, $e),
             1205,
             1213    => new BusinessException('Opération concurrente en cours, merci de réessayer.', 0, $e),

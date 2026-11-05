@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controller\AuthController;
 use App\Controller\HomeController;
 use App\Controller\ProfileController;
+use App\Controller\StationController;
 use App\Middleware\RequireRole;
 use App\Security\Auth;
 use App\Support\Flash;
@@ -33,5 +34,18 @@ return static function (App $app): void {
         $g->get('/profil', [ProfileController::class, 'show'])->setName('profile');
         $g->post('/profil', [ProfileController::class, 'update'])->setName('profile.update');
         $g->post('/profil/mot-de-passe', [ProfileController::class, 'password'])->setName('profile.password');
+
+        $g->get('/stations', [StationController::class, 'index'])->setName('stations');
+        $g->get('/stations/{id:[0-9]+}', [StationController::class, 'show'])->setName('stations.show');
     })->add($require());
+
+    // ---- Administrateurs
+    $app->group('', function (RouteCollectorProxy $g): void {
+        $g->get('/stations/nouvelle', [StationController::class, 'createForm'])->setName('stations.create');
+        $g->post('/stations', [StationController::class, 'create'])->setName('stations.store');
+        $g->get('/stations/{id:[0-9]+}/modifier', [StationController::class, 'editForm'])->setName('stations.edit');
+        $g->post('/stations/{id:[0-9]+}', [StationController::class, 'update'])->setName('stations.update');
+        $g->post('/stations/{id:[0-9]+}/supprimer', [StationController::class, 'delete'])->setName('stations.delete');
+        $g->post('/stations/{id:[0-9]+}/bornes/{borne:[0-9]+}', [StationController::class, 'borneEtat'])->setName('stations.borne');
+    })->add($require([Auth::ADMIN]));
 };

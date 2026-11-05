@@ -1,2 +1,5 @@
 {% import 'macros/ui.twig' as ui %}
-{{ ui.nav_link('home', 'Accueil') }}
+{{ ui.nav_link('home', current_user() ? 'Tableau de bord' : 'Accueil') }}
+{% if current_user() %}
+  {{ ui.nav_link('stations', 'Stations') }}
+{% endif %}

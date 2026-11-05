@@ -1,0 +1,39 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% set editing = station.id_station is defined and station.id_station %}
+{% block title %}{{ editing ? 'Modifier ' ~ station.nom : 'Nouvelle station' }}{% endblock %}
+
+{% block content %}
+  {% set errors = errors ?? {} %}
+  <a href="{{ editing ? url_for('stations.show', {id: station.id_station}) : url_for('stations') }}" class="text-sm text-zinc-500 hover:text-zinc-900">← Retour</a>
+  <h1 class="mb-6 mt-3 text-2xl font-semibold tracking-tight">{{ editing ? 'Modifier la station' : 'Nouvelle station' }}</h1>
+
+  <form method="post" action="{{ editing ? url_for('stations.update', {id: station.id_station}) : url_for('stations.store') }}"
+        class="card grid max-w-2xl gap-4 p-6 sm:grid-cols-2" novalidate>
+    {{ csrf_field() }}
+    <div class="sm:col-span-2">
+      {{ ui.field('nom', 'Nom', station.nom ?? '', errors.nom ?? null, 'text', {required: true, maxlength: 150}) }}
+    </div>
+    <div class="sm:col-span-2">
+      {{ ui.field('adresse', 'Adresse', station.adresse ?? '', errors.adresse ?? null, 'text', {required: true, maxlength: 255}) }}
+    </div>
+    {{ ui.field('latitude', 'Latitude', station.latitude ?? '', errors.latitude ?? null, 'text', {required: true, inputmode: 'decimal', placeholder: '47.638900'}) }}
+    {{ ui.field('longitude', 'Longitude', station.longitude ?? '', errors.longitude ?? null, 'text', {required: true, inputmode: 'decimal', placeholder: '6.863800'}) }}
+    <div>
+      <label for="f-etat" class="label">État</label>
+      <select id="f-etat" name="etat_station" class="input">
+        {% for e in etats %}<option value="{{ e }}" {{ station.etat_station == e ? 'selected' }}>{{ e|label }}</option>{% endfor %}
+      </select>
+    </div>
+    {% if editing %}
+      {{ ui.field('nb_bornes_ajout', 'Bornes à ajouter (actuellement ' ~ station.nb_bornes ~ ')', station.nb_bornes_ajout ?? 0, errors.nb_bornes_ajout ?? null, 'number', {min: 0, max: 100}) }}
+    {% else %}
+      {{ ui.field('nb_bornes', 'Nombre de bornes', station.nb_bornes ?? 10, errors.nb_bornes ?? null, 'number', {required: true, min: 1, max: 100}) }}
+    {% endif %}
+    <div class="flex gap-2 sm:col-span-2">
+      <button class="btn-primary">{{ editing ? 'Enregistrer' : 'Créer la station' }}</button>
+      <a href="{{ editing ? url_for('stations.show', {id: station.id_station}) : url_for('stations') }}" class="btn-ghost">Annuler</a>
+    </div>
+  </form>
+{% endblock %}
