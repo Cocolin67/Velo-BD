@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controller\AuthController;
 use App\Controller\HomeController;
 use App\Controller\ProfileController;
+use App\Controller\RentalController;
 use App\Controller\StationController;
 use App\Controller\SubscriptionController;
 use App\Middleware\RequireRole;
@@ -46,7 +47,16 @@ return static function (App $app): void {
         $g->post('/abonnement', [SubscriptionController::class, 'subscribe'])->setName('subscriptions.subscribe');
         $g->post('/abonnement/{id:[0-9]+}/renouveler', [SubscriptionController::class, 'renew'])->setName('subscriptions.renew');
         $g->post('/abonnement/{id:[0-9]+}/resilier', [SubscriptionController::class, 'cancel'])->setName('subscriptions.cancel');
+
+        $g->get('/trajets', [RentalController::class, 'index'])->setName('rentals');
+        $g->post('/trajets/emprunt', [RentalController::class, 'borrow'])->setName('rentals.borrow');
+        $g->post('/trajets/retour', [RentalController::class, 'giveBack'])->setName('rentals.return');
     })->add($require([Auth::USAGER]));
+
+    // ---- Opérateurs (et administrateurs, qui en héritent)
+    $app->group('', function (RouteCollectorProxy $g): void {
+        $g->get('/locations', [RentalController::class, 'admin'])->setName('rentals.admin');
+    })->add($require([Auth::OPERATEUR]));
 
     // ---- Administrateurs
     $app->group('', function (RouteCollectorProxy $g): void {

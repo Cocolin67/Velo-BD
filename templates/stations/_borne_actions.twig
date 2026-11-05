@@ -1,1 +1,8 @@
-{# Actions possibles sur le vélo d'une borne (complété par les locations) #}
+{# Emprunt direct depuis la borne (usager, vélo disponible, borne et station en service) #}
+{% if is_granted('usager') and b.etat_velo == 'disponible' and b.etat_borne == 'fonctionnelle' and station.etat_station == 'en_service' %}
+  <form method="post" action="{{ url_for('rentals.borrow') }}">
+    {{ csrf_field() }}
+    <input type="hidden" name="id_velo" value="{{ b.id_velo }}">
+    <button class="btn-primary w-full">Emprunter</button>
+  </form>
+{% endif %}

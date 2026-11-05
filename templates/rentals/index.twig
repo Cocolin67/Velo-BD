@@ -1,0 +1,126 @@
+{% extends 'layout.twig' %}
+{% import 'macros/ui.twig' as ui %}
+
+{% block title %}Mes trajets{% endblock %}
+
+{% block content %}
+  {{ ui.page_header('Mes trajets') }}
+
+  {% if current %}
+    {# ---- Trajet en cours : restitution #}
+    <section class="card mb-8 overflow-hidden border-sky-200">
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-sky-50/60 p-6">
+        <div>
+          <p class="text-sm font-medium text-sky-700">Trajet en cours</p>
+          <h2 class="mt-1 text-lg font-semibold">Vélo #{{ current.id_velo }} · {{ current.type_velo|label }}</h2>
+          <p class="mt-1 text-sm text-zinc-600">
+            Emprunté à <strong>{{ current.station_depart }}</strong> le {{ current.date_heure_emprunt|dt }}
+          </p>
+        </div>
+        <div class="flex gap-8 text-right">
+          <div><p class="text-xs text-zinc-500">Durée</p><p class="text-2xl font-semibold tabular-nums">{{ current.minutes|duration }}</p></div>
+          <div><p class="text-xs text-zinc-500">Coût estimé</p><p class="text-2xl font-semibold tabular-nums">{{ current.cout_estime|money }}</p></div>
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('rentals.return') }}" class="flex flex-wrap items-end gap-3 border-t border-sky-100 p-6">
+        {{ csrf_field() }}
+        <div class="min-w-64 flex-1">
+          <label for="f-retour" class="label">Station de retour</label>
+          <select id="f-retour" name="id_station" class="input" required>
+            {% for s in stations %}
+              <option value="{{ s.id_station }}" {{ s.nb_bornes_libres == 0 ? 'disabled' }}>
+                {{ s.nom }} — {{ s.nb_bornes_libres }} borne{{ s.nb_bornes_libres > 1 ? 's' }} libre{{ s.nb_bornes_libres > 1 ? 's' }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn-primary">Rendre le vélo</button>
+      </form>
+    </section>
+
+  {% elseif not subscription %}
+    <section class="card mb-8 flex flex-wrap items-center justify-between gap-4 border-amber-200 bg-amber-50/60 p-6">
+      <div>
+        <h2 class="font-semibold">Aucun abonnement valide</h2>
+        <p class="mt-1 text-sm text-zinc-600">Souscrivez une formule pour pouvoir emprunter un vélo.</p>
+      </div>
+      <a href="{{ url_for('subscriptions') }}" class="btn-primary">Voir les formules</a>
+    </section>
+
+  {% else %}
+    {# ---- Emprunt : choix de la station puis du vélo #}
+    <section class="card mb-8 p-6">
+      <h2 class="font-semibold">Emprunter un vélo</h2>
+      <p class="mt-1 text-sm text-zinc-500">Abonnement {{ subscription.libelle }} valable jusqu'au {{ subscription.date_fin|d }}.</p>
+      <form method="get" action="{{ url_for('rentals') }}" class="mt-4 flex flex-wrap items-end gap-3">
+        <div class="min-w-64 flex-1">
+          <label for="f-station" class="label">Station de départ</label>
+          <select id="f-station" name="station" class="input" required>
+            <option value="">Choisir une station…</option>
+            {% for s in stations %}
+              <option value="{{ s.id_station }}" {{ station_id == s.id_station ? 'selected' }} {{ s.nb_velos_disponibles == 0 ? 'disabled' }}>
+                {{ s.nom }} — {{ s.nb_velos_disponibles }} vélo{{ s.nb_velos_disponibles > 1 ? 's' }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn-secondary">Voir les vélos</button>
+      </form>
+
+      {% if station_id %}
+        {% if bikes is empty %}
+          <p class="mt-4 text-sm text-zinc-500">Aucun vélo disponible dans cette station.</p>
+        {% else %}
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {% for v in bikes %}
+              <form method="post" action="{{ url_for('rentals.borrow') }}" class="flex items-center justify-between rounded-xl border border-zinc-200 p-3">
+                {{ csrf_field() }}
+                <input type="hidden" name="id_velo" value="{{ v.id_velo }}">
+                <div>
+                  <p class="text-sm font-medium">Vélo #{{ v.id_velo }} {{ ui.badge(v.type_velo) }}</p>
+                  <p class="text-xs text-zinc-500">
+                    Borne {{ v.num_borne }}{% if v.niveau_batterie is not null %} · batterie {{ v.niveau_batterie }} %{% endif %}
+                  </p>
+                </div>
+                <button class="btn-primary">Emprunter</button>
+              </form>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="mb-6 grid gap-4 sm:grid-cols-3">
+    {{ ui.stat('Trajets effectués', summary.trajets|num) }}
+    {{ ui.stat('Temps total à vélo', summary.minutes|duration) }}
+    {{ ui.stat('Dépenses (hors abonnement)', summary.depenses|money) }}
+  </section>
+
+  <section class="card overflow-hidden">
+    <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Historique</h2>
+    {% if history is empty %}
+      {{ ui.empty('Vous n\'avez encore effectué aucun trajet.') }}
+    {% else %}
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead class="bg-zinc-50">
+            <tr><th>Départ</th><th>Trajet</th><th>Vélo</th><th class="text-right">Durée</th><th class="text-right">Coût</th></tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-100">
+            {% for l in history %}
+              <tr>
+                <td>{{ l.date_heure_emprunt|dt }}</td>
+                <td>{{ l.station_depart }} <span class="text-zinc-400">→</span> {{ l.station_arrivee ?? 'en cours' }}</td>
+                <td>#{{ l.id_velo }} <span class="text-xs text-zinc-500">{{ l.type_velo|label }}</span></td>
+                <td class="text-right tabular-nums">{{ l.duree_min|duration }}</td>
+                <td class="text-right tabular-nums">{{ l.cout|money }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {{ ui.pagination('rentals', page, has_next) }}
+    {% endif %}
+  </section>
+{% endblock %}

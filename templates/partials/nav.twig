@@ -4,5 +4,9 @@
   {{ ui.nav_link('stations', 'Stations') }}
 {% endif %}
 {% if is_granted('usager') %}
+  {{ ui.nav_link('rentals', 'Mes trajets') }}
   {{ ui.nav_link('subscriptions', 'Abonnement') }}
+{% endif %}
+{% if is_granted('operateur') %}
+  {{ ui.nav_link('rentals.admin', 'Locations') }}
 {% endif %}
