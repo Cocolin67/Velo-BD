@@ -181,7 +181,9 @@ final class Database
             1217    => new BusinessException('Suppression impossible : des données y font référence (historique conservé).', 0, $e),
             1452,
             1216    => new BusinessException('Référence inconnue : l\'élément lié n\'existe pas.', 0, $e),
-            3819    => new BusinessException('Données refusées par une contrainte d\'intégrité de la base.', 0, $e),
+            // 3819 : MySQL 8 ; 4025 : MariaDB (ER_CONSTRAINT_FAILED)
+            3819,
+            4025    => new BusinessException('Données refusées par une contrainte d\'intégrité de la base.', 0, $e),
             1205,
             1213    => new BusinessException('Opération concurrente en cours, merci de réessayer.', 0, $e),
             default => $e,

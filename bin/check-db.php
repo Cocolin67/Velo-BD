@@ -54,13 +54,26 @@ echo '✓ Connecté en tant que ', $pdo->query('SELECT CURRENT_USER()')->fetchCo
 $checks = [
     'lecture de la vue v_stations_occupation' => 'SELECT COUNT(*) FROM v_stations_occupation',
     'appel d\'une fonction stockée'           => 'SELECT fn_cout_formule(0, \'mecanique\', 0)',
+    'stations'                                => 'SELECT COUNT(*) FROM station',
+    'locations'                               => 'SELECT COUNT(*) FROM location',
     'comptes de démonstration'                => "SELECT COUNT(*) FROM utilisateur WHERE email LIKE '%@velo.local'",
+];
+$hints = [
+    'stations'                 => 'aucune donnée : exécutez database/seed.sql puis CALL sp_seed_petit();',
+    'locations'                => 'aucune donnée : exécutez database/seed.sql puis CALL sp_seed_petit();',
+    'comptes de démonstration' => 'exécutez database/demo_accounts.sql pour pouvoir vous connecter',
 ];
 $ok = true;
 foreach ($checks as $label => $sql) {
     try {
         $value = $pdo->query($sql)->fetchColumn();
-        printf("✓ %s%s\n", $label, $label === 'comptes de démonstration' ? " : $value (3 attendus)" : '');
+        if (isset($hints[$label])) {
+            $missing = (int) $value === 0;
+            $ok      = $ok && !$missing;
+            printf("%s %s : %s%s\n", $missing ? '✗' : '✓', $label, $value, $missing ? ' → ' . $hints[$label] : '');
+            continue;
+        }
+        printf("✓ %s\n", $label);
     } catch (PDOException $e) {
         $ok = false;
         printf("✗ %s : %s\n", $label, $e->errorInfo[2] ?? $e->getMessage());
