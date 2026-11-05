@@ -1591,6 +1591,16 @@ END$$
 DROP PROCEDURE IF EXISTS sp_seed_verifier$$
 CREATE PROCEDURE sp_seed_verifier()
 BEGIN
+    -- En REPEATABLE READ, un INSERT ... SELECT pose un verrou partagé sur chaque ligne
+    -- lue : sur plusieurs millions de locations, la table des verrous déborde
+    -- (ERROR 1206). En READ COMMITTED, la lecture est cohérente et sans verrou.
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+        RESIGNAL;
+    END;
+    SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+
     DROP TEMPORARY TABLE IF EXISTS tmp_verif;
     CREATE TEMPORARY TABLE tmp_verif (
         ordre INT AUTO_INCREMENT PRIMARY KEY,
@@ -1686,6 +1696,7 @@ BEGIN
            IF(anomalies = 0, 'OK', IF(indicatif, 'INDICATIF', 'ANOMALIE')) AS statut
       FROM tmp_verif ORDER BY ordre;
     DROP TEMPORARY TABLE tmp_verif;
+    SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 END$$
 
 -- =============================================================================
