@@ -73,6 +73,17 @@ mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database
 
 Sous PowerShell, remplacez `< fichier.sql` par `Get-Content fichier.sql -Raw | mysql ...`.
 
+### Mettre à jour une base existante (migrations)
+
+Une base déjà peuplée (plusieurs Go) ne doit pas être recréée : appliquez plutôt, dans l’ordre, les scripts de [`database/migrations/`](database/migrations/). Ils sont ré-exécutables et ne reconstruisent que ce qui a changé. Ré-exécutez ensuite `procedures.sql` (lui-même ré-exécutable) pour mettre à jour les procédures.
+
+```bash
+mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/migrations/001_index_couvrants_stats.sql
+mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/procedures.sql
+```
+
+La migration 001 reconstruit deux index sur `location` et `releve_station` : sur une grosse base, comptez plusieurs minutes. La table reste lisible et modifiable pendant l’opération.
+
 ### 2. Configurer l’application
 
 ```bash
