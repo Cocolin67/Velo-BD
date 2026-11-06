@@ -981,18 +981,26 @@ END$$
 DROP PROCEDURE IF EXISTS sp_stat_remplissage_stations$$
 CREATE PROCEDURE sp_stat_remplissage_stations(IN p_debut DATETIME, IN p_fin DATETIME)
 BEGIN
+    -- Optimisation : les relevés de la période sont agrégés d'abord (plage sur l'index
+    -- couvrant idx_releve_horodatage), puis joints aux 300 stations. Avec la jointure
+    -- directe, l'optimiseur partait de STATION et lisait par la clé primaire TOUS les
+    -- relevés de chaque station avant de filtrer la date (2,6 s -> 1 s sur 30 jours).
     SELECT s.id_station,
            s.nom,
-           HOUR(r.horodatage)  AS heure,
-           ROUND(AVG((r.nb_velos_mecaniques + r.nb_velos_electriques)
-                     / NULLIF(r.nb_velos_mecaniques + r.nb_velos_electriques + r.nb_bornes_libres, 0)), 3)
-                               AS taux_remplissage_moyen,
-           COUNT(*)            AS nb_releves
-      FROM releve_station r
-      JOIN station s ON s.id_station = r.id_station
-     WHERE r.horodatage >= p_debut AND r.horodatage < p_fin
-     GROUP BY s.id_station, s.nom, HOUR(r.horodatage)
-     ORDER BY s.id_station, heure;
+           x.heure,
+           ROUND(x.taux_remplissage_moyen, 3) AS taux_remplissage_moyen,
+           x.nb_releves
+      FROM (SELECT r.id_station,
+                   HOUR(r.horodatage) AS heure,
+                   AVG((r.nb_velos_mecaniques + r.nb_velos_electriques)
+                       / NULLIF(r.nb_velos_mecaniques + r.nb_velos_electriques + r.nb_bornes_libres, 0))
+                                      AS taux_remplissage_moyen,
+                   COUNT(*)           AS nb_releves
+              FROM releve_station r
+             WHERE r.horodatage >= p_debut AND r.horodatage < p_fin
+             GROUP BY r.id_station, HOUR(r.horodatage)) x
+      JOIN station s ON s.id_station = x.id_station
+     ORDER BY s.id_station, x.heure;
 END$$
 
 -- Recettes par formule : factures encaissées et en attente sur la période d'émission.
@@ -1025,54 +1033,72 @@ END$$
 -- Taux d'indisponibilité de la flotte : part du temps passée « en atelier » ou « défectueux »,
 -- calculée à partir de HISTORIQUE_ETAT, par type de vélo et au total (ligne « tous »).
 --
--- Optimisation : seules comptent les lignes de la période ET, pour chaque vélo, le
--- dernier état connu avant p_debut (l'état dans lequel il entre dans la période).
--- Ce dernier état est trouvé par une sous-requête corrélée servie par l'index
--- idx_hist_etat_velo_date (id_velo, date_heure) en parcours descendant : une seule
--- lecture d'index par vélo. L'ancienne version appliquait la fonction de fenêtre LEAD
--- à tout l'historique antérieur à p_fin (des millions de lignes pour une période de 30 jours).
+-- Optimisation : pas de fonction de fenêtre sur tous les changements d'état de la période
+-- (≈ 800 000 sur 30 jours, la plupart « disponible » / « en_location » liés aux locations).
+--   - Numérateur : seuls les intervalles d'indisponibilité comptent. On ne lit que les
+--     passages en atelier / défectueux de la période (≈ 200 sur 30 jours, index
+--     idx_hist_etat_etat_date) et l'état de chaque vélo à l'ouverture de la période ;
+--     la fin de chaque intervalle est l'événement suivant du même vélo, trouvé par une
+--     seule lecture de l'index idx_hist_etat_velo_date.
+--   - Dénominateur : les intervalles d'un vélo se suivent sans trou, de son premier
+--     événement connu jusqu'à p_fin ; le temps observé vaut donc
+--     p_fin - GREATEST(p_debut, premier événement), une lecture d'index par vélo.
+--     (ORDER BY ... LIMIT 1 et non MIN() : dans une sous-requête corrélée, MariaDB
+--     parcourt sinon toutes les entrées d'index du vélo.)
+-- Résultats identiques à l'ancienne version ; 30 jours : 30 s -> 0,7 s, 1 an : 465 s -> 6,5 s.
 DROP PROCEDURE IF EXISTS sp_stat_indisponibilite_flotte$$
 CREATE PROCEDURE sp_stat_indisponibilite_flotte(IN p_debut DATETIME, IN p_fin DATETIME)
 BEGIN
-    WITH bornes_hist AS (
-        -- changements d'état survenus pendant la période.
-        -- Aucun index ne commence par date_heure : le filtre sur les 4 valeurs de l'ENUM
-        -- (NOT NULL, donc sans effet sur le résultat) permet à l'optimiseur de lire
-        -- idx_hist_etat_etat_date (etat_velo, date_heure) en 4 plages de dates au lieu
-        -- de parcourir l'index entier (10 M d'entrées).
-        SELECT h.id_hist_etat
-          FROM historique_etat h
-         WHERE h.etat_velo IN ('disponible', 'en_location', 'en_atelier', 'defectueux')
-           AND h.date_heure >= p_debut AND h.date_heure < p_fin
+    WITH debuts AS (
+        -- état de chaque vélo à l'ouverture de la période, s'il est indisponible
+        SELECT h.id_velo, h.id_hist_etat, h.date_heure
+          FROM (SELECT (SELECT h0.id_hist_etat
+                          FROM historique_etat h0
+                         WHERE h0.id_velo = v.id_velo AND h0.date_heure < p_debut
+                         ORDER BY h0.date_heure DESC, h0.id_hist_etat DESC
+                         LIMIT 1) AS id_hist_etat
+                  FROM velo v) o
+          JOIN historique_etat h ON h.id_hist_etat = o.id_hist_etat
+         WHERE h.etat_velo IN ('en_atelier', 'defectueux')
         UNION ALL
-        -- état de chaque vélo à l'ouverture de la période
-        SELECT (SELECT h.id_hist_etat
-                  FROM historique_etat h
-                 WHERE h.id_velo = v.id_velo AND h.date_heure < p_debut
-                 ORDER BY h.date_heure DESC, h.id_hist_etat DESC
-                 LIMIT 1)
-          FROM velo v
+        -- passages en atelier / défectueux pendant la période
+        SELECT h.id_velo, h.id_hist_etat, h.date_heure
+          FROM historique_etat h
+         WHERE h.etat_velo IN ('en_atelier', 'defectueux')
+           AND h.date_heure >= p_debut AND h.date_heure < p_fin
     ),
-    periodes AS (
-        SELECT h.id_velo,
-               h.etat_velo,
-               GREATEST(h.date_heure, p_debut) AS debut,
-               LEAST(COALESCE(LEAD(h.date_heure) OVER (PARTITION BY h.id_velo
-                                                       ORDER BY h.date_heure, h.id_hist_etat),
-                              p_fin), p_fin)   AS fin
-          FROM bornes_hist b
-          JOIN historique_etat h ON h.id_hist_etat = b.id_hist_etat
+    indispo AS (
+        -- durée de chaque intervalle d'indisponibilité, bornée à la période
+        SELECT d.id_velo,
+               SUM(TIMESTAMPDIFF(SECOND, GREATEST(d.date_heure, p_debut),
+                   LEAST(COALESCE((SELECT n.date_heure
+                                     FROM historique_etat n
+                                    WHERE n.id_velo = d.id_velo
+                                      AND n.date_heure >= d.date_heure
+                                      AND (n.date_heure > d.date_heure OR n.id_hist_etat > d.id_hist_etat)
+                                    ORDER BY n.date_heure, n.id_hist_etat
+                                    LIMIT 1), p_fin), p_fin))) AS secondes
+          FROM debuts d
+         GROUP BY d.id_velo
+    ),
+    presence AS (
+        -- temps observé de chaque vélo dans la période (NULL : aucun historique)
+        SELECT v.id_velo, v.type_velo,
+               TIMESTAMPDIFF(SECOND, GREATEST((SELECT h.date_heure
+                                                 FROM historique_etat h
+                                                WHERE h.id_velo = v.id_velo
+                                                ORDER BY h.date_heure
+                                                LIMIT 1), p_debut), p_fin) AS secondes
+          FROM velo v
     )
-    SELECT COALESCE(v.type_velo, 'tous')       AS type_velo,
-           COUNT(DISTINCT p.id_velo)           AS nb_velos,
-           ROUND(100 * SUM(CASE WHEN p.etat_velo IN ('en_atelier', 'defectueux')
-                                THEN TIMESTAMPDIFF(SECOND, p.debut, p.fin) ELSE 0 END)
-                 / NULLIF(SUM(TIMESTAMPDIFF(SECOND, p.debut, p.fin)), 0), 2)
-                                               AS taux_indisponibilite_pct
-      FROM periodes p
-      JOIN velo v ON v.id_velo = p.id_velo
-     WHERE p.fin > p.debut
-     GROUP BY v.type_velo WITH ROLLUP;
+    SELECT COALESCE(pr.type_velo, 'tous') AS type_velo,
+           COUNT(*)                       AS nb_velos,
+           ROUND(100 * SUM(COALESCE(i.secondes, 0)) / NULLIF(SUM(pr.secondes), 0), 2)
+                                          AS taux_indisponibilite_pct
+      FROM presence pr
+      LEFT JOIN indispo i ON i.id_velo = pr.id_velo
+     WHERE pr.secondes > 0
+     GROUP BY pr.type_velo WITH ROLLUP;
 END$$
 
 DELIMITER ;
