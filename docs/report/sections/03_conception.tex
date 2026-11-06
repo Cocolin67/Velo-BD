@@ -1,0 +1,32 @@
+\section{Conception de la base de données}\label{sec:conception}
+
+\subsection{Modèle conceptuel}
+
+\diagramme{entite_association}{Schéma entité-association}
+
+\afaire{présenter les entités principales et les associations porteuses de sens (location entre abonnement, vélo et bornes ; historiques ; tournée et lignes de tournée) ; justifier les cardinalités clés et la spécialisation des utilisateurs en usager / opérateur / administrateur.}
+
+\subsection{Modèle logique}
+
+\diagramme{logical_data_model}{Schéma relationnel}
+
+\afaire{expliquer le passage au relationnel (héritage par tables filles partageant la clé \texttt{id\_utilisateur}, tables d'association, clés composées comme \texttt{tranche\_tarifaire(id\_formule, rang)} et \texttt{releve\_station(id\_station, horodatage)}).}
+
+\subsection{Normalisation}
+
+Le schéma respecte la troisième forme normale : chaque table décrit une seule entité ou association, tout attribut non clé dépend de toute la clé et de rien d'autre que la clé. Quelques attributs dérivables ont été conservés volontairement ; ils sont calculés par la base, jamais saisis, ce qui écarte les anomalies de mise à jour que la normalisation vise à éviter :
+
+\begin{itemize}
+	\item \texttt{location.duree\_min} est une \textbf{colonne générée} (\texttt{GENERATED ALWAYS AS \ldots{} STORED}) à partir des dates d'emprunt et de restitution : elle ne peut pas diverger de ces dates, et elle est indexable pour les statistiques ;
+	\item \texttt{location.cout} est calculé par déclencheur à la restitution et \textbf{figé} : il dépend de la tarification \emph{au moment du trajet}, qui peut évoluer ensuite ; le recalculer fausserait les factures passées ;
+	\item \texttt{location.velo\_en\_cours} et \texttt{abo\_en\_cours} sont des colonnes générées, non nulles seulement pendant une location : un index \texttt{UNIQUE} sur chacune garantit « au plus une location en cours » par vélo et par abonnement (MariaDB n'offre pas d'index unique partiel) ;
+	\item \texttt{abonnement.statut} : la résiliation n'est pas déductible des dates, et l'état \og expiré \fg{} est matérialisé par un événement planifié pour permettre un accès indexé aux abonnements actifs.
+\end{itemize}
+
+\subsection{Contraintes d'intégrité}
+
+\afaire{détailler les contraintes : clés étrangères et leurs actions (\texttt{ON DELETE CASCADE} pour les bornes et relevés d'une station), \texttt{CHECK} (coordonnées, batterie réservée aux vélos électriques, position cohérente avec l'état), unicités (\texttt{uq\_velo\_borne} : une borne, un vélo).}
+
+\subsection{Index}
+
+\afaire{présenter la stratégie d'indexation : index couvrant chaque clé étrangère, index orientés requêtes (recherche de l'abonnement valide, file des signalements, historiques par vélo et par date). Les index couvrants ajoutés pour les statistiques sont étudiés en partie~\ref{sec:performances}.}

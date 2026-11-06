@@ -1,0 +1,22 @@
+\section{Application web}\label{sec:application}
+
+\subsection{Architecture}
+
+L'application suit une architecture en couches autour du micro-framework Slim~4 :
+\begin{itemize}
+	\item \texttt{public/index.php} : point d'entrée unique ;
+	\item \texttt{config/} : paramètres (lus depuis \texttt{.env}), conteneur d'injection de dépendances, chaîne de middlewares (erreurs, en-têtes de sécurité, session, CSRF) et routes groupées par rôle ;
+	\item \texttt{src/Controller/} : un contrôleur par domaine (stations, locations, abonnements, statistiques\ldots) ;
+	\item \texttt{src/Repository/} : toutes les requêtes SQL et les appels de procédures, ce qui isole l'accès aux données ;
+	\item \texttt{templates/} : gabarits Twig (mise en page Tailwind, composants réutilisables).
+\end{itemize}
+
+\afaire{schéma du cheminement d'une requête (route, middleware de rôle, contrôleur, repository, procédure stockée, gabarit).}
+
+\subsection{Fonctionnalités par rôle}
+
+\afaire{une capture d'écran commentée par fonctionnalité exigée : inscription et connexion ; stations en temps réel et gestion par l'administrateur (ajout, modification, suppression, recherche, filtres) ; emprunt et restitution avec coût estimé, historique des trajets ; page de statistiques (onglets, graphiques, export CSV). Ajouter les fonctionnalités supplémentaires : abonnements et factures, signalements, flotte, tableaux de bord par rôle.}
+
+\subsection{Page de statistiques}
+
+La page présente les six statistiques demandées, réparties en trois onglets (\og Trajets \fg{}, \og Stations et régulation \fg{}, \og Recettes et flotte \fg{}) ; seules les procédures de l'onglet affiché sont exécutées. Les résultats sont mis en cache côté application (une heure pour une période passée, cinq minutes si elle inclut le jour courant, trente secondes pour le temps réel), et un lien permet de les recalculer pour mesurer le temps réel des procédures. Chaque rapport est exportable en CSV.

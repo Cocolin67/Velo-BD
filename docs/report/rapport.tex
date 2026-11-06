@@ -11,6 +11,58 @@
 \usepackage{helvet} % Police sans serif ressemblante au visuel
 \renewcommand{\familydefault}{\sfdefault} % Applique la police sans serif par défaut
 
+% ===== PAQUETS DU CORPS DU RAPPORT =====
+\usepackage{booktabs}        % tableaux
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{listings}        % extraits SQL / PHP
+\usepackage{pgfplots}        % graphiques générés depuis les CSV de docs/report/data
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{babel}       % évite les conflits entre babel (french) et les options TikZ
+\usepackage{svg}             % diagrammes SVG (Overleaf : Inkscape disponible ; sinon exporter en PDF)
+\usepackage[hidelinks]{hyperref}
+
+% Couleurs des graphiques (avant / après)
+\definecolor{avant}{HTML}{B5525C}
+\definecolor{apres}{HTML}{3C7A5A}
+\definecolor{neutre}{HTML}{4A4C52}
+
+% Extraits de code
+\lstdefinestyle{sql}{
+	language=SQL, basicstyle=\ttfamily\footnotesize, keywordstyle=\bfseries\color{neutre},
+	commentstyle=\itshape\color{bleugris}, breaklines=true, frame=single, rulecolor=\color{bleugris},
+	columns=fullflexible, keepspaces=true, showstringspaces=false,
+	morekeywords={STRAIGHT_JOIN, LEAD, OVER, PARTITION, ROLLUP, WITH, LIMIT, SIGNAL, DELIMITER},
+	literate={é}{{\'e}}1 {è}{{\`e}}1 {à}{{\`a}}1 {ç}{{\c{c}}}1 {ê}{{\^e}}1 {É}{{\'E}}1 {ô}{{\^o}}1
+	         {«}{{\guillemotleft}}1 {»}{{\guillemotright}}1 {’}{{'}}1 {≈}{{$\approx$}}1
+}
+
+% Encadré « à compléter » pour les parties non rédigées
+\newcommand{\afaire}[1]{%
+	\par\noindent\fcolorbox{fondvert}{fondvert!15}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{%
+	\small\textbf{À rédiger :} #1}}\par\medskip}
+
+% Diagrammes de docs/diagrams : version PDF si elle existe, sinon le SVG
+\newcommand{\diagramme}[3][\linewidth]{%
+	\begin{figure}[H]\centering
+		\IfFileExists{../diagrams/#2.pdf}%
+			{\includegraphics[width=#1]{../diagrams/#2.pdf}}%
+			{\includesvg[width=#1]{../diagrams/#2}}
+		\caption{#3}\label{fig:#2}
+	\end{figure}}
+
+% Filtre pgfplots : ne garder que les lignes dont la colonne #1 vaut #2
+\pgfplotsset{
+	garder si/.style 2 args={
+		x filter/.append code={%
+			\edef\tempa{\thisrow{#1}}\edef\tempb{#2}%
+			\ifx\tempa\tempb\else\def\pgfmathresult{inf}\fi}},
+}
+
 \geometry{margin=0pt}
 \pagestyle{empty}
 \setlength{\parindent}{0pt}
@@ -171,17 +223,31 @@
 	\vspace{22mm} 
 	
 	{\bfseries\large Résumé}\\[2ex]
-	Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue. Ut in risus volutpat libero pharetra tempor. Cras vestibulum bibendum augue. Praesent egestas leo in pede. Praesent blandit odio eu enim. Pellentesque sed dui ut augue blandit sodales. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Aliquam nibh. Mauris ac mauris sed pede pellentesque fermentum. Maecenas adipiscing ante non diam sodales hendrerit. 
-	
-	Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. Duis semper. Duis arcu massa, scelerisque vitae, consequat in, pretium a, enim. Pellentesque congue.
-	
+	Ce rapport présente la conception et la réalisation d'un système d'information pour un réseau de vélos en libre-service : une base de données relationnelle MariaDB en troisième forme normale, dont les règles métier (un vélo à un seul endroit, une borne par vélo, une location à la fois par usager, calcul automatique de la durée et du coût) sont garanties par des contraintes, des déclencheurs et des procédures stockées, et une application web PHP (Slim 4, Twig) qui l'exploite selon trois rôles : usager, opérateur et administrateur.
+
+	La base a été peuplée avec un jeu de données factices de près de 5~Go (5~millions de locations, 10~millions d'événements historisés). À ce volume, plusieurs statistiques ne répondaient plus en un temps raisonnable : une démarche de mesure, d'analyse des plans d'exécution et de réécriture des requêtes a ramené chaque onglet de la page de statistiques sous 5~secondes, avec des gains allant jusqu'à un facteur 70 sur la requête la plus coûteuse. Le rapport détaille ces évolutions et les mesures qui les justifient.
+
 	\clearpage
-	
+
 	% ===== DÉBUT DU RAPPORT (PAGE 3) =====
 	\newgeometry{margin=25mm} % Marges standards pour la suite
 	\pagestyle{plain} % Numérotation simple en bas
-	
-	\section*{Introduction}
-	Le contenu de votre rapport commence ici...
-	
+	\setlength{\parskip}{0.6em}
+
+	\tableofcontents
+	\clearpage
+
+	\input{sections/01_introduction}
+	\input{sections/02_besoins}
+	\input{sections/03_conception}
+	\input{sections/04_implementation}
+	\input{sections/05_donnees}
+	\input{sections/06_application}
+	\input{sections/07_evolution}
+	\input{sections/08_performances}
+	\input{sections/09_conclusion}
+
+	\appendix
+	\input{sections/annexes}
+
 \end{document}

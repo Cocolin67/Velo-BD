@@ -1,0 +1,43 @@
+\section{Implémentation SQL}\label{sec:implementation}
+
+Les règles métier sont implémentées dans la base : l'application n'exécute aucune écriture directe sur les tables sensibles et appelle des procédures stockées, dont elle affiche tels quels les messages d'erreur levés par \texttt{SIGNAL}.
+
+\subsection{Déclencheurs et historisation}
+
+\begin{itemize}
+	\item \texttt{trg\_velo\_ai}, \texttt{trg\_velo\_au} : historisation de chaque changement d'état (\texttt{historique\_etat}) et de position (\texttt{historique\_position}) d'un vélo ; chaque changement de position ferme la ligne ouverte (date de fin renseignée) et en ouvre une nouvelle ;
+	\item \texttt{trg\_location\_bi}, \texttt{trg\_location\_bu} : contrôle des règles d'emprunt (abonnement valide, un seul vélo à la fois, vélo disponible) et calcul automatique du coût à la restitution ;
+	\item \texttt{trg\_abonnement\_bi} : un seul abonnement actif à la fois par usager ;
+	\item \texttt{trg\_signalement\_ai} : un vélo signalé défectueux ne peut plus être emprunté.
+\end{itemize}
+
+Pendant le chargement massif des données factices, les procédures de génération positionnent la variable de session \texttt{@seed\_mode} : les déclencheurs sont alors inactifs pour cette session uniquement, le générateur produisant lui-même des historiques cohérents. Cela évite plusieurs millions d'exécutions de déclencheurs.
+
+\afaire{extrait commenté de \texttt{trg\_velo\_au}.}
+
+\subsection{Procédures et fonctions métier}
+
+\begin{itemize}
+	\item locations : \texttt{sp\_emprunter\_velo}, \texttt{sp\_rendre\_velo} (transactions, verrouillage du vélo et de la borne) ;
+	\item abonnements : \texttt{sp\_souscrire\_abonnement}, \texttt{sp\_renouveler\_abonnement}, \texttt{sp\_resilier\_abonnement}, \texttt{sp\_expirer\_abonnements} ;
+	\item facturation : \texttt{fn\_cout\_formule}, \texttt{fn\_calculer\_cout} (durée gratuite, tranches, supplément électrique), \texttt{sp\_facturer\_locations} ;
+	\item maintenance : \texttt{sp\_signaler\_probleme}, \texttt{sp\_ouvrir\_intervention}, \texttt{sp\_demarrer\_reparation}, \texttt{sp\_cloturer\_intervention} ;
+	\item régulation : \texttt{sp\_stations\_a\_reequilibrer}, \texttt{sp\_proposer\_deplacements}, \texttt{sp\_demarrer\_tournee}, \texttt{sp\_deplacer\_velo\_tournee}, \texttt{sp\_terminer\_tournee} ;
+	\item statistiques : six procédures \texttt{sp\_stat\_*} (partie~\ref{sec:performances}).
+\end{itemize}
+
+Le coût d'un trajet suit la formule de l'abonnement : les \texttt{duree\_gratuite\_min} premières minutes sont gratuites ; au-delà, les tranches s'appliquent dans l'ordre de leur rang, la dernière se répétant tant que le trajet continue (toute tranche commencée est due) ; le supplément électrique s'ajoute pour un vélo électrique. Par exemple, avec 30~minutes gratuites et deux tranches de 30~minutes à 1~€ puis 2~€, un trajet de 100~minutes coûte $1 + 2 \times \lceil 40/30 \rceil = 5$~€.
+
+\afaire{présenter en détail l'emprunt et la restitution (déroulé de la transaction, verrous, erreurs levées).}
+
+\subsection{Événements planifiés}
+
+Trois événements automatisent les traitements périodiques : \texttt{ev\_expirer\_abonnements}, \texttt{ev\_facturer\_locations} et \texttt{ev\_releve\_stations} (relevé de l'occupation des stations, qui alimente la statistique de remplissage). Ils nécessitent l'activation de l'ordonnanceur (\texttt{event\_scheduler=ON} dans la configuration du serveur).
+
+\subsection{Sécurité}
+
+\begin{itemize}
+	\item l'application se connecte avec un compte dédié, \texttt{velo\_app}, qui n'a que \texttt{SELECT} et \texttt{EXECUTE} sur la base, plus des droits d'écriture ciblés : insertion, modification et suppression sur \texttt{station} et \texttt{borne} ; modification de certaines \emph{colonnes} seulement de \texttt{utilisateur}, \texttt{usager} et \texttt{signalement} ;
+	\item mots de passe hachés avec bcrypt, régénération de la session à la connexion, limitation des tentatives ;
+	\item jeton CSRF sur chaque formulaire, requêtes préparées uniquement, échappement automatique des gabarits, en-têtes HTTP de sécurité.
+\end{itemize}

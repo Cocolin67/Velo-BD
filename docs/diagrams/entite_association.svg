@@ -1,0 +1,463 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3780" height="2970" viewBox="0 0 3780 2970" font-family="Arial, Helvetica, sans-serif" font-size="13">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="50" y="70" font-size="34" font-weight="bold">Diagramme entité-association — Réseau de vélos en libre-service</text>
+<polyline points="837.0,678.0 837.0,875.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="837.0,1123.0 837.0,931.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="752.0,1148.0 621.4,1148.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="335.0,1148.0 472.1,1148.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="270.0,1168.0 270.0,1442.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="270.0,1716.0 270.0,1498.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="837.0,1173.0 837.0,1624.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="837.0,2124.0 837.0,1680.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="784.3,1173.0 550.0,1699.6" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="311.1,2136.0 528.2,1743.4" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="335.0,2156.0 491.6,2156.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="742.0,2156.0 601.9,2156.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="888.0,2124.0 1162.7,1973.8" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1453.0,1862.0 1218.1,1948.9" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="893.4,2188.0 1156.0,2284.3" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1505.0,2376.0 1224.8,2305.3" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="842.5,2188.0 1170.4,2542.9" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1535.4,2440.0 1220.6,2550.6" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1552.5,1862.0 1552.5,2086.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1552.5,2376.0 1552.5,2142.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1637.5,2437.9 2153.7,2461.3" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2745.0,2438.3 2273.9,2461.1" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2835.0,2440.0 2835.0,2618.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2835.0,2836.0 2835.0,2674.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1552.5,1778.0 1552.5,1610.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1552.5,1364.0 1552.5,1554.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1603.0,1862.0 1797.8,1973.8" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1995.0,2080.0 1848.1,2001.7" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2043.4,2120.0 1832.9,2259.2" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1597.6,2376.0 1780.6,2288.6" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2090.0,210.0 2403.0,210.0 2403.0,434.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2403.0,1428.0 2403.0,490.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2343.5,1484.0 2015.0,1618.5" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1667.5,1785.1 1956.3,1644.7" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2429.4,1484.0 2532.3,1935.2" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2781.5,2376.0 2550.3,1981.1" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2354.7,1428.0 2281.9,1316.4" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2093.6,1173.0 2244.2,1278.3" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2025.0,681.0 2025.0,882.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2025.0,1123.0 2025.0,938.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1973.9,1173.0 1846.3,1460.9" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1577.8,1778.0 1818.6,1503.8" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2085.8,681.0 2540.3,964.6" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2802.9,1128.0 2589.8,995.4" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2900.0,1148.0 3087.6,1148.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="3377.5,1148.0 3189.9,1148.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2835.0,1168.0 2835.0,1358.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2835.0,1585.0 2835.0,1414.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2725.0,1625.4 2227.7,1695.3" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1667.5,1818.9 2150.8,1709.2" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2794.0,1635.0 2782.1,1932.5" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2794.0,2376.0 2781.9,1987.6" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2875.7,1635.0 2888.3,2100.4" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="2876.6,2376.0 2887.6,2155.3" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1976.4,230.0 1485.0,432.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1485.0,484.5 1485.0,502.5 837.0,502.5 837.0,644.4" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1485.0,484.5 1485.0,502.5 2025.0,502.5 2025.0,639.1" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1771.5,658.0 1950.0,658.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<polyline points="1509.0,658.0 1719.0,658.0" fill="none" stroke="#333" stroke-width="1.5"/>
+<line x1="1518.5" y1="1778.0" x2="1501.9" y2="1757.4" stroke="#555" stroke-width="1.1"/>
+<line x1="1437.5" y1="1838.1" x2="1395.8" y2="1844.7" stroke="#555" stroke-width="1.1"/>
+<line x1="1437.5" y1="1805.0" x2="1359.7" y2="1794.9" stroke="#555" stroke-width="1.1"/>
+<line x1="1528.7" y1="1862.0" x2="1502.3" y2="1908.4" stroke="#555" stroke-width="1.1"/>
+<line x1="1437.5" y1="1778.4" x2="1380.1" y2="1757.6" stroke="#555" stroke-width="1.1"/>
+<line x1="2887.3" y1="2440.0" x2="2914.6" y2="2456.7" stroke="#555" stroke-width="1.1"/>
+<line x1="2818.0" y1="2440.0" x2="2806.7" y2="2461.4" stroke="#555" stroke-width="1.1"/>
+<line x1="2745.0" y1="2393.0" x2="2708.4" y2="2386.9" stroke="#555" stroke-width="1.1"/>
+<line x1="2925.0" y1="2393.3" x2="2964.9" y2="2386.8" stroke="#555" stroke-width="1.1"/>
+<line x1="2925.0" y1="2418.6" x2="2972.2" y2="2424.1" stroke="#555" stroke-width="1.1"/>
+<line x1="2905.1" y1="2376.0" x2="2968.4" y2="2347.1" stroke="#555" stroke-width="1.1"/>
+<line x1="808.4" y1="2188.0" x2="789.0" y2="2209.7" stroke="#555" stroke-width="1.1"/>
+<line x1="785.1" y1="2124.0" x2="752.8" y2="2104.1" stroke="#555" stroke-width="1.1"/>
+<line x1="932.0" y1="2144.5" x2="1017.6" y2="2134.2" stroke="#555" stroke-width="1.1"/>
+<line x1="932.0" y1="2167.8" x2="965.6" y2="2172.0" stroke="#555" stroke-width="1.1"/>
+<line x1="748.0" y1="2188.0" x2="699.6" y2="2205.4" stroke="#555" stroke-width="1.1"/>
+<line x1="1571.0" y1="2440.0" x2="1583.6" y2="2461.7" stroke="#555" stroke-width="1.1"/>
+<line x1="1467.5" y1="2422.0" x2="1424.0" y2="2429.2" stroke="#555" stroke-width="1.1"/>
+<line x1="1637.5" y1="2394.3" x2="1684.3" y2="2386.8" stroke="#555" stroke-width="1.1"/>
+<line x1="805.7" y1="1123.0" x2="778.4" y2="1101.2" stroke="#555" stroke-width="1.1"/>
+<line x1="881.0" y1="1173.0" x2="913.4" y2="1191.4" stroke="#555" stroke-width="1.1"/>
+<line x1="879.1" y1="1123.0" x2="909.6" y2="1104.9" stroke="#555" stroke-width="1.1"/>
+<line x1="922.0" y1="1154.5" x2="961.9" y2="1157.6" stroke="#555" stroke-width="1.1"/>
+<line x1="760.0" y1="1173.0" x2="677.0" y2="1199.9" stroke="#555" stroke-width="1.1"/>
+<line x1="2457.3" y1="1428.0" x2="2492.9" y2="1409.6" stroke="#555" stroke-width="1.1"/>
+<line x1="2498.0" y1="1469.5" x2="2544.1" y2="1476.1" stroke="#555" stroke-width="1.1"/>
+<line x1="2308.0" y1="1469.3" x2="2258.6" y2="1476.2" stroke="#555" stroke-width="1.1"/>
+<line x1="2397.3" y1="1484.0" x2="2392.8" y2="1506.1" stroke="#555" stroke-width="1.1"/>
+<line x1="2808.9" y1="1585.0" x2="2785.1" y2="1562.1" stroke="#555" stroke-width="1.1"/>
+<line x1="2945.0" y1="1621.1" x2="3029.6" y2="1629.7" stroke="#555" stroke-width="1.1"/>
+<line x1="1990.5" y1="1123.0" x2="1959.6" y2="1100.6" stroke="#555" stroke-width="1.1"/>
+<line x1="2073.8" y1="1123.0" x2="2110.9" y2="1104.0" stroke="#555" stroke-width="1.1"/>
+<line x1="1930.0" y1="1158.5" x2="1847.7" y2="1167.6" stroke="#555" stroke-width="1.1"/>
+<line x1="2120.0" y1="1143.1" x2="2218.3" y2="1138.0" stroke="#555" stroke-width="1.1"/>
+<line x1="2030.9" y1="1173.0" x2="2042.3" y2="1221.1" stroke="#555" stroke-width="1.1"/>
+<line x1="2847.8" y1="1128.0" x2="2862.1" y2="1105.6" stroke="#555" stroke-width="1.1"/>
+<line x1="2796.4" y1="1168.0" x2="2758.3" y2="1187.8" stroke="#555" stroke-width="1.1"/>
+<line x1="2770.0" y1="1139.0" x2="2708.9" y2="1130.6" stroke="#555" stroke-width="1.1"/>
+<line x1="270.0" y1="1128.0" x2="270.0" y2="1106.0" stroke="#555" stroke-width="1.1"/>
+<line x1="249.5" y1="1168.0" x2="227.7" y2="1189.2" stroke="#555" stroke-width="1.1"/>
+<line x1="205.0" y1="1133.0" x2="180.4" y2="1127.3" stroke="#555" stroke-width="1.1"/>
+<line x1="312.7" y1="1168.0" x2="392.0" y2="1205.2" stroke="#555" stroke-width="1.1"/>
+<line x1="319.2" y1="1128.0" x2="400.4" y2="1095.0" stroke="#555" stroke-width="1.1"/>
+<line x1="237.3" y1="1128.0" x2="136.8" y2="1066.5" stroke="#555" stroke-width="1.1"/>
+<line x1="2092.5" y1="2080.0" x2="2092.5" y2="2058.0" stroke="#555" stroke-width="1.1"/>
+<line x1="2110.6" y1="2120.0" x2="2132.3" y2="2143.9" stroke="#555" stroke-width="1.1"/>
+<line x1="1992.0" y1="2111.2" x2="1933.1" y2="2117.8" stroke="#555" stroke-width="1.1"/>
+<line x1="2193.0" y1="2088.5" x2="2248.6" y2="2082.2" stroke="#555" stroke-width="1.1"/>
+<line x1="270.0" y1="2176.0" x2="270.0" y2="2198.0" stroke="#555" stroke-width="1.1"/>
+<line x1="260.9" y1="2136.0" x2="250.8" y2="2113.5" stroke="#555" stroke-width="1.1"/>
+<line x1="205.0" y1="2167.8" x2="152.0" y2="2177.4" stroke="#555" stroke-width="1.1"/>
+<line x1="205.0" y1="2149.5" x2="136.7" y2="2142.7" stroke="#555" stroke-width="1.1"/>
+<line x1="1999.5" y1="635.0" x2="1975.9" y2="613.7" stroke="#555" stroke-width="1.1"/>
+<line x1="1998.9" y1="681.0" x2="1974.6" y2="702.5" stroke="#555" stroke-width="1.1"/>
+<line x1="2025.0" y1="230.0" x2="2025.0" y2="252.0" stroke="#555" stroke-width="1.1"/>
+<line x1="2025.0" y1="190.0" x2="2025.0" y2="168.0" stroke="#555" stroke-width="1.1"/>
+<line x1="1995.0" y1="190.0" x2="1967.5" y2="171.6" stroke="#555" stroke-width="1.1"/>
+<line x1="2054.1" y1="190.0" x2="2080.6" y2="171.8" stroke="#555" stroke-width="1.1"/>
+<line x1="1960.0" y1="214.6" x2="1899.1" y2="218.8" stroke="#555" stroke-width="1.1"/>
+<line x1="2090.0" y1="197.2" x2="2188.8" y2="177.8" stroke="#555" stroke-width="1.1"/>
+<line x1="2835.0" y1="2876.0" x2="2835.0" y2="2898.0" stroke="#555" stroke-width="1.1"/>
+<line x1="2798.4" y1="2836.0" x2="2757.9" y2="2813.8" stroke="#555" stroke-width="1.1"/>
+<line x1="2913.0" y1="2864.8" x2="2993.0" y2="2873.8" stroke="#555" stroke-width="1.1"/>
+<line x1="2885.1" y1="2836.0" x2="2930.3" y2="2817.9" stroke="#555" stroke-width="1.1"/>
+<line x1="3442.5" y1="1168.0" x2="3442.5" y2="1190.0" stroke="#555" stroke-width="1.1"/>
+<line x1="3442.5" y1="1128.0" x2="3442.5" y2="1106.0" stroke="#555" stroke-width="1.1"/>
+<line x1="3507.5" y1="1157.0" x2="3568.6" y2="1165.4" stroke="#555" stroke-width="1.1"/>
+<line x1="1552.5" y1="1324.0" x2="1552.5" y2="1302.0" stroke="#555" stroke-width="1.1"/>
+<line x1="1527.4" y1="1364.0" x2="1499.4" y2="1386.3" stroke="#555" stroke-width="1.1"/>
+<line x1="1589.4" y1="1364.0" x2="1625.4" y2="1383.5" stroke="#555" stroke-width="1.1"/>
+<line x1="270.0" y1="1756.0" x2="270.0" y2="1778.0" stroke="#555" stroke-width="1.1"/>
+<line x1="232.1" y1="1716.0" x2="189.8" y2="1693.6" stroke="#555" stroke-width="1.1"/>
+<line x1="312.5" y1="1756.0" x2="355.7" y2="1776.3" stroke="#555" stroke-width="1.1"/>
+<line x1="806.6" y1="678.0" x2="774.5" y2="699.1" stroke="#555" stroke-width="1.1"/>
+<line x1="858.7" y1="638.0" x2="882.0" y2="616.5" stroke="#555" stroke-width="1.1"/>
+<ellipse cx="1492.5" cy="1745.8" rx="38.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1492.5" y="1750.3" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_vélo</text>
+<ellipse cx="1381.0" cy="1847.0" rx="45.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1381.0" y="1851.5" text-anchor="middle" font-size="12.5">type_vélo</text>
+<ellipse cx="1344.8" cy="1793.0" rx="84.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1344.8" y="1797.5" text-anchor="middle" font-size="12.5">date_mise_en_service</text>
+<ellipse cx="1494.9" cy="1921.4" rx="45.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1494.9" y="1925.9" text-anchor="middle" font-size="12.5">état_vélo</text>
+<ellipse cx="1366.0" cy="1752.5" rx="66.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1366.0" y="1757.0" text-anchor="middle" font-size="12.5">niveau_batterie</text>
+<ellipse cx="2927.3" cy="2464.5" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2927.3" y="2469.0" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_station</text>
+<ellipse cx="2799.7" cy="2474.6" rx="24.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2799.7" y="2479.1" text-anchor="middle" font-size="12.5">nom</text>
+<ellipse cx="2693.6" cy="2384.4" rx="38.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2693.6" y="2388.9" text-anchor="middle" font-size="12.5">adresse</text>
+<ellipse cx="2979.7" cy="2384.4" rx="42.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2979.7" y="2388.9" text-anchor="middle" font-size="12.5">latitude</text>
+<ellipse cx="2987.1" cy="2425.9" rx="45.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2987.1" y="2430.4" text-anchor="middle" font-size="12.5">longitude</text>
+<ellipse cx="2982.1" cy="2340.8" rx="56.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2982.1" y="2345.3" text-anchor="middle" font-size="12.5">état_station</text>
+<ellipse cx="779.0" cy="2220.8" rx="52.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="779.0" y="2225.3" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_location</text>
+<ellipse cx="740.0" cy="2096.2" rx="77.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="740.0" y="2100.7" text-anchor="middle" font-size="12.5">date_heure_emprunt</text>
+<ellipse cx="1032.5" cy="2132.4" rx="91.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1032.5" y="2136.9" text-anchor="middle" font-size="12.5">date_heure_restitution</text>
+<ellipse cx="980.4" cy="2173.9" rx="31.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2" stroke-dasharray="5,3"/>
+<text x="980.4" y="2178.4" text-anchor="middle" font-size="12.5">durée</text>
+<ellipse cx="685.5" cy="2210.5" rx="28.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2" stroke-dasharray="5,3"/>
+<text x="685.5" y="2215.0" text-anchor="middle" font-size="12.5">coût</text>
+<ellipse cx="1591.1" cy="2474.6" rx="42.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1591.1" y="2479.1" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_borne</text>
+<ellipse cx="1409.2" cy="2431.6" rx="45.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1409.2" y="2436.1" text-anchor="middle" font-size="12.5">num_borne</text>
+<ellipse cx="1699.1" cy="2384.4" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1699.1" y="2388.9" text-anchor="middle" font-size="12.5">état_borne</text>
+<ellipse cx="766.6" cy="1091.8" rx="59.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="766.6" y="1096.3" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_abonnement</text>
+<ellipse cx="926.5" cy="1198.8" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="926.5" y="1203.3" text-anchor="middle" font-size="12.5">date_début</text>
+<ellipse cx="922.5" cy="1097.2" rx="42.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="922.5" y="1101.7" text-anchor="middle" font-size="12.5">date_fin</text>
+<ellipse cx="976.8" cy="1158.8" rx="35.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="976.8" y="1163.3" text-anchor="middle" font-size="12.5">statut</text>
+<ellipse cx="662.7" cy="1204.6" rx="80.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="662.7" y="1209.1" text-anchor="middle" font-size="12.5">renouvellement_auto</text>
+<ellipse cx="2506.2" cy="1402.8" rx="63.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2506.2" y="1407.3" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_signalement</text>
+<ellipse cx="2559.0" cy="1478.2" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2559.0" y="1482.7" text-anchor="middle" font-size="12.5">date_heure</text>
+<ellipse cx="2243.7" cy="1478.2" rx="52.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2243.7" y="1482.7" text-anchor="middle" font-size="12.5">description</text>
+<ellipse cx="2389.8" cy="1520.8" rx="35.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2389.8" y="1525.3" text-anchor="middle" font-size="12.5">statut</text>
+<ellipse cx="2774.3" cy="1551.7" rx="45.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2774.3" y="1556.2" text-anchor="middle" font-size="12.5">num_ligne</text>
+<line x1="2744.6" y1="1558.7" x2="2804.0" y2="1558.7" stroke="#000" stroke-dasharray="3,2"/>
+<ellipse cx="3044.6" cy="1631.2" rx="91.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="3044.6" y="1635.7" text-anchor="middle" font-size="12.5">date_heure_déplacement</text>
+<ellipse cx="1947.4" cy="1091.8" rx="66.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1947.4" y="1096.3" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_intervention</text>
+<ellipse cx="2124.2" cy="1097.2" rx="56.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2124.2" y="1101.7" text-anchor="middle" font-size="12.5">date_retrait</text>
+<ellipse cx="1832.8" cy="1169.2" rx="87.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1832.8" y="1173.7" text-anchor="middle" font-size="12.5">date_début_réparation</text>
+<ellipse cx="2233.3" cy="1137.2" rx="94.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2233.3" y="1141.7" text-anchor="middle" font-size="12.5">date_remise_circulation</text>
+<ellipse cx="2045.7" cy="1235.7" rx="80.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2045.7" y="1240.2" text-anchor="middle" font-size="12.5">description_travaux</text>
+<ellipse cx="2870.2" cy="1092.9" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2870.2" y="1097.4" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_tournée</text>
+<ellipse cx="2744.9" cy="1194.7" rx="70.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2744.9" y="1199.2" text-anchor="middle" font-size="12.5">date_heure_début</text>
+<ellipse cx="2694.0" cy="1128.5" rx="63.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2694.0" y="1133.0" text-anchor="middle" font-size="12.5">date_heure_fin</text>
+<ellipse cx="270.0" cy="1091.0" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="270.0" y="1095.5" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_formule</text>
+<ellipse cx="217.0" cy="1199.7" rx="38.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="217.0" y="1204.2" text-anchor="middle" font-size="12.5">libellé</text>
+<ellipse cx="165.8" cy="1123.9" rx="28.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="165.8" y="1128.4" text-anchor="middle" font-size="12.5">prix</text>
+<ellipse cx="405.6" cy="1211.6" rx="84.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="405.6" y="1216.1" text-anchor="middle" font-size="12.5">durée_validité_jours</text>
+<ellipse cx="414.2" cy="1089.3" rx="77.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="414.2" y="1093.8" text-anchor="middle" font-size="12.5">durée_gratuite_min</text>
+<ellipse cx="124.0" cy="1058.7" rx="87.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="124.0" y="1063.2" text-anchor="middle" font-size="12.5">supplément_électrique</text>
+<ellipse cx="2092.5" cy="2043.0" rx="52.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2092.5" y="2047.5" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_hist_pos</text>
+<ellipse cx="2142.3" cy="2155.1" rx="70.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2142.3" y="2159.6" text-anchor="middle" font-size="12.5">date_heure_début</text>
+<ellipse cx="1918.2" cy="2119.5" rx="63.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1918.2" y="2124.0" text-anchor="middle" font-size="12.5">date_heure_fin</text>
+<ellipse cx="2263.5" cy="2080.5" rx="59.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2263.5" y="2085.0" text-anchor="middle" font-size="12.5">type_position</text>
+<ellipse cx="270.0" cy="2213.0" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="270.0" y="2217.5" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_facture</text>
+<ellipse cx="244.6" cy="2099.9" rx="59.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="244.6" y="2104.4" text-anchor="middle" font-size="12.5">date_émission</text>
+<ellipse cx="137.2" cy="2180.1" rx="59.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="137.2" y="2184.6" text-anchor="middle" font-size="12.5">montant_total</text>
+<ellipse cx="121.7" cy="2141.2" rx="66.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="121.7" y="2145.7" text-anchor="middle" font-size="12.5">statut_paiement</text>
+<ellipse cx="1964.8" cy="603.6" rx="45.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1964.8" y="608.1" text-anchor="middle" font-size="12.5">matricule</text>
+<ellipse cx="1963.3" cy="712.4" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1963.3" y="716.9" text-anchor="middle" font-size="12.5">spécialité</text>
+<ellipse cx="2025.0" cy="267.0" rx="63.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2025.0" y="271.5" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_utilisateur</text>
+<ellipse cx="2025.0" cy="153.0" rx="24.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2025.0" y="157.5" text-anchor="middle" font-size="12.5">nom</text>
+<ellipse cx="1955.0" cy="163.3" rx="35.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1955.0" y="167.8" text-anchor="middle" font-size="12.5">prénom</text>
+<ellipse cx="2093.0" cy="163.3" rx="31.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2093.0" y="167.8" text-anchor="middle" font-size="12.5">email</text>
+<ellipse cx="1884.2" cy="219.9" rx="56.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1884.2" y="224.4" text-anchor="middle" font-size="12.5">mot_de_passe</text>
+<ellipse cx="2203.5" cy="174.9" rx="70.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2203.5" y="179.4" text-anchor="middle" font-size="12.5">date_inscription</text>
+<ellipse cx="2835.0" cy="2913.0" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2835.0" y="2917.5" text-anchor="middle" font-size="12.5">horodatage</text>
+<line x1="2802.0" y1="2920.0" x2="2868.0" y2="2920.0" stroke="#000" stroke-dasharray="3,2"/>
+<ellipse cx="2744.8" cy="2806.6" rx="80.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2744.8" y="2811.1" text-anchor="middle" font-size="12.5">nb_vélos_mécaniques</text>
+<ellipse cx="3007.9" cy="2875.5" rx="84.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="3007.9" y="2880.0" text-anchor="middle" font-size="12.5">nb_vélos_électriques</text>
+<ellipse cx="2944.3" cy="2812.3" rx="70.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="2944.3" y="2816.8" text-anchor="middle" font-size="12.5">nb_bornes_libres</text>
+<ellipse cx="3442.5" cy="1205.0" rx="52.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="3442.5" y="1209.5" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_véhicule</text>
+<ellipse cx="3442.5" cy="1091.0" rx="66.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="3442.5" y="1095.5" text-anchor="middle" font-size="12.5">immatriculation</text>
+<ellipse cx="3583.5" cy="1167.5" rx="63.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="3583.5" y="1172.0" text-anchor="middle" font-size="12.5">capacité_vélos</text>
+<ellipse cx="1552.5" cy="1287.0" rx="56.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1552.5" y="1291.5" text-anchor="middle" font-size="12.5" text-decoration="underline" font-weight="bold">id_hist_état</text>
+<ellipse cx="1487.6" cy="1395.7" rx="49.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1487.6" y="1400.2" text-anchor="middle" font-size="12.5">date_heure</text>
+<ellipse cx="1638.5" cy="1390.7" rx="45.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="1638.5" y="1395.2" text-anchor="middle" font-size="12.5">état_vélo</text>
+<ellipse cx="270.0" cy="1793.0" rx="28.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="270.0" y="1797.5" text-anchor="middle" font-size="12.5">rang</text>
+<line x1="256.8" y1="1800.0" x2="283.2" y2="1800.0" stroke="#000" stroke-dasharray="3,2"/>
+<ellipse cx="176.5" cy="1686.6" rx="73.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="176.5" y="1691.1" text-anchor="middle" font-size="12.5">durée_tranche_min</text>
+<ellipse cx="369.2" cy="1782.7" rx="59.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="369.2" y="1787.2" text-anchor="middle" font-size="12.5">tarif_tranche</text>
+<ellipse cx="762.0" cy="707.4" rx="63.0" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="762.0" y="711.9" text-anchor="middle" font-size="12.5">date_naissance</text>
+<ellipse cx="893.0" cy="606.3" rx="45.5" ry="15.0" fill="#f4f9ef" stroke="#3f6b2a" stroke-width="1.2"/>
+<text x="893.0" y="610.8" text-anchor="middle" font-size="12.5">téléphone</text>
+<polygon points="781.9,903.0 837.0,875.0 892.1,903.0 837.0,931.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="837.0" y="908.0" text-anchor="middle" font-style="italic" font-size="14">Souscrire</text>
+<polygon points="472.1,1148.0 546.8,1120.0 621.4,1148.0 546.8,1176.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="546.8" y="1153.0" text-anchor="middle" font-style="italic" font-size="14">Correspondre à</text>
+<polygon points="214.9,1470.0 270.0,1442.0 325.1,1470.0 270.0,1498.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<polygon points="224.9,1470.0 270.0,1447.0 315.1,1470.0 270.0,1493.0" fill="none" stroke="#333" stroke-width="1.2"/>
+<text x="270.0" y="1475.0" text-anchor="middle" font-style="italic" font-size="14">Comporter</text>
+<polygon points="781.9,1652.0 837.0,1624.0 892.1,1652.0 837.0,1680.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="837.0" y="1657.0" text-anchor="middle" font-style="italic" font-size="14">Effectuer</text>
+<polygon points="490.0,1722.0 540.0,1694.0 590.0,1722.0 540.0,1750.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="540.0" y="1727.0" text-anchor="middle" font-style="italic" font-size="14">Émettre</text>
+<polygon points="491.6,2156.0 546.8,2128.0 601.9,2156.0 546.8,2184.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="546.8" y="2161.0" text-anchor="middle" font-style="italic" font-size="14">Regrouper</text>
+<polygon points="1138.0,1960.0 1188.0,1932.0 1238.0,1960.0 1188.0,1988.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1188.0" y="1965.0" text-anchor="middle" font-style="italic" font-size="14">Louer</text>
+<polygon points="1132.9,2296.0 1188.0,2268.0 1243.1,2296.0 1188.0,2324.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1188.0" y="2301.0" text-anchor="middle" font-style="italic" font-size="14">Partir de</text>
+<polygon points="1132.9,2562.0 1188.0,2534.0 1243.1,2562.0 1188.0,2590.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1188.0" y="2567.0" text-anchor="middle" font-style="italic" font-size="14">Arriver à</text>
+<polygon points="1493.5,2114.0 1552.5,2086.0 1611.5,2114.0 1552.5,2142.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1552.5" y="2119.0" text-anchor="middle" font-style="italic" font-size="14">Stationner</text>
+<polygon points="2147.2,2464.0 2214.0,2436.0 2280.8,2464.0 2214.0,2492.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2214.0" y="2469.0" text-anchor="middle" font-style="italic" font-size="14">Appartenir à</text>
+<polygon points="2785.0,2646.0 2835.0,2618.0 2885.0,2646.0 2835.0,2674.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<polygon points="2795.0,2646.0 2835.0,2623.0 2875.0,2646.0 2835.0,2669.0" fill="none" stroke="#333" stroke-width="1.2"/>
+<text x="2835.0" y="2651.0" text-anchor="middle" font-style="italic" font-size="14">Mesurer</text>
+<polygon points="1477.9,1582.0 1552.5,1554.0 1627.1,1582.0 1552.5,1610.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1552.5" y="1587.0" text-anchor="middle" font-style="italic" font-size="14">Changer d&#39;état</text>
+<polygon points="1772.5,1988.0 1822.5,1960.0 1872.5,1988.0 1822.5,2016.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1822.5" y="1993.0" text-anchor="middle" font-style="italic" font-size="14">Occuper</text>
+<polygon points="1753.9,2275.0 1809.0,2247.0 1864.1,2275.0 1809.0,2303.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1809.0" y="2280.0" text-anchor="middle" font-style="italic" font-size="14">Localiser</text>
+<polygon points="2351.8,462.0 2403.0,434.0 2454.2,462.0 2403.0,490.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2403.0" y="467.0" text-anchor="middle" font-style="italic" font-size="14">Signaler</text>
+<polygon points="1929.4,1631.0 1984.5,1603.0 2039.6,1631.0 1984.5,1659.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1984.5" y="1636.0" text-anchor="middle" font-style="italic" font-size="14">Concerner</text>
+<polygon points="2488.0,1960.0 2538.0,1932.0 2588.0,1960.0 2538.0,1988.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2538.0" y="1965.0" text-anchor="middle" font-style="italic" font-size="14">Viser</text>
+<polygon points="2209.0,1295.0 2268.0,1267.0 2327.0,1295.0 2268.0,1323.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2268.0" y="1300.0" text-anchor="middle" font-style="italic" font-size="14">Déclencher</text>
+<polygon points="1973.8,910.0 2025.0,882.0 2076.2,910.0 2025.0,938.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2025.0" y="915.0" text-anchor="middle" font-style="italic" font-size="14">Réaliser</text>
+<polygon points="1777.0,1484.0 1836.0,1456.0 1895.0,1484.0 1836.0,1512.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="1836.0" y="1489.0" text-anchor="middle" font-style="italic" font-size="14">Porter sur</text>
+<polygon points="2509.9,980.0 2565.0,952.0 2620.1,980.0 2565.0,1008.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2565.0" y="985.0" text-anchor="middle" font-style="italic" font-size="14">Effectuer</text>
+<polygon points="3087.6,1148.0 3138.8,1120.0 3189.9,1148.0 3138.8,1176.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="3138.8" y="1153.0" text-anchor="middle" font-style="italic" font-size="14">Utiliser</text>
+<polygon points="2783.8,1386.0 2835.0,1358.0 2886.2,1386.0 2835.0,1414.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<polygon points="2793.8,1386.0 2835.0,1363.0 2876.2,1386.0 2835.0,1409.0" fill="none" stroke="#333" stroke-width="1.2"/>
+<text x="2835.0" y="1391.0" text-anchor="middle" font-style="italic" font-size="14">Composer</text>
+<polygon points="2135.8,1701.0 2187.0,1673.0 2238.2,1701.0 2187.0,1729.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2187.0" y="1706.0" text-anchor="middle" font-style="italic" font-size="14">Déplacer</text>
+<polygon points="2722.0,1960.0 2781.0,1932.0 2840.0,1960.0 2781.0,1988.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2781.0" y="1965.0" text-anchor="middle" font-style="italic" font-size="14">Prélever à</text>
+<polygon points="2833.9,2128.0 2889.0,2100.0 2944.1,2128.0 2889.0,2156.0" fill="#fff4d6" stroke="#333" stroke-width="1.5"/>
+<text x="2889.0" y="2133.0" text-anchor="middle" font-style="italic" font-size="14">Déposer à</text>
+<polygon points="1485.0,431.99999999999994 1450.5,484.5 1519.5,484.5" fill="#e7eefc" stroke="#333" stroke-width="1.5"/>
+<text x="1485.0" y="474.0" text-anchor="middle" font-size="12" font-weight="bold">est un</text>
+<text x="1527.0" y="470.0" font-size="12" font-style="italic" fill="#444">(disjointe, totale)</text>
+<polygon points="1771.5,658.0 1719.0,623.5 1719.0,692.5" fill="#e7eefc" stroke="#333" stroke-width="1.5"/>
+<text x="1738.5" y="662.0" text-anchor="middle" font-size="11" font-weight="bold">est un</text>
+<rect x="1960.0" y="190.0" width="130.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="2025.0" y="215.5" text-anchor="middle" font-weight="bold" font-size="15">UTILISATEUR</text>
+<rect x="772.0" y="638.0" width="130.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="837.0" y="663.5" text-anchor="middle" font-weight="bold" font-size="15">USAGER</text>
+<rect x="1950.0" y="635.0" width="150.0" height="46.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="2025.0" y="663.5" text-anchor="middle" font-weight="bold" font-size="15">OPÉRATEUR</text>
+<rect x="1353.0" y="638.0" width="156.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="1431.0" y="663.5" text-anchor="middle" font-weight="bold" font-size="15">ADMINISTRATEUR</text>
+<rect x="2308.0" y="1428.0" width="190.0" height="56.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="2403.0" y="1461.5" text-anchor="middle" font-weight="bold" font-size="15">SIGNALEMENT</text>
+<rect x="1930.0" y="1123.0" width="190.0" height="50.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="2025.0" y="1153.5" text-anchor="middle" font-weight="bold" font-size="15">INTERVENTION</text>
+<rect x="2770.0" y="1128.0" width="130.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="2835.0" y="1153.5" text-anchor="middle" font-weight="bold" font-size="15">TOURNÉE</text>
+<rect x="3377.5" y="1128.0" width="130.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="3442.5" y="1153.5" text-anchor="middle" font-weight="bold" font-size="15">VÉHICULE</text>
+<rect x="2725.0" y="1585.0" width="220.0" height="50.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<rect x="2729.0" y="1589.0" width="212.0" height="42.0" fill="none" stroke="#1f3b73" stroke-width="1.2"/>
+<text x="2835.0" y="1615.5" text-anchor="middle" font-weight="bold" font-size="15">LIGNE_TOURNÉE</text>
+<rect x="1437.5" y="1778.0" width="230.0" height="84.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="1552.5" y="1825.5" text-anchor="middle" font-weight="bold" font-size="15">VÉLO</text>
+<rect x="1470.0" y="1324.0" width="165.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="1552.5" y="1349.5" text-anchor="middle" font-weight="bold" font-size="15">HISTORIQUE_ÉTAT</text>
+<rect x="2745.0" y="2376.0" width="180.0" height="64.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="2835.0" y="2413.5" text-anchor="middle" font-weight="bold" font-size="15">STATION</text>
+<rect x="2757.0" y="2836.0" width="156.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<rect x="2761.0" y="2840.0" width="148.0" height="32.0" fill="none" stroke="#1f3b73" stroke-width="1.2"/>
+<text x="2835.0" y="2861.5" text-anchor="middle" font-weight="bold" font-size="15">RELEVÉ_STATION</text>
+<rect x="1467.5" y="2376.0" width="170.0" height="64.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="1552.5" y="2413.5" text-anchor="middle" font-weight="bold" font-size="15">BORNE</text>
+<rect x="1992.0" y="2080.0" width="201.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="2092.5" y="2105.5" text-anchor="middle" font-weight="bold" font-size="15">HISTORIQUE_POSITION</text>
+<rect x="742.0" y="2124.0" width="190.0" height="64.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="837.0" y="2161.5" text-anchor="middle" font-weight="bold" font-size="15">LOCATION</text>
+<rect x="752.0" y="1123.0" width="170.0" height="50.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="837.0" y="1153.5" text-anchor="middle" font-weight="bold" font-size="15">ABONNEMENT</text>
+<rect x="205.0" y="1128.0" width="130.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="270.0" y="1153.5" text-anchor="middle" font-weight="bold" font-size="15">FORMULE</text>
+<rect x="178.5" y="1716.0" width="183.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<rect x="182.5" y="1720.0" width="175.0" height="32.0" fill="none" stroke="#1f3b73" stroke-width="1.2"/>
+<text x="270.0" y="1741.5" text-anchor="middle" font-weight="bold" font-size="15">TRANCHE_TARIFAIRE</text>
+<rect x="205.0" y="2136.0" width="130.0" height="40.0" fill="#eaf1fb" stroke="#1f3b73" stroke-width="1.8"/>
+<text x="270.0" y="2161.5" text-anchor="middle" font-weight="bold" font-size="15">FACTURE</text>
+<text x="852.0" y="705.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="852.0" y="1106.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="730.0" y="1168.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="357.0" y="1168.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="285.0" y="1195.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="285.0" y="1699.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="852.0" y="1200.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="852.0" y="2107.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="789.1" y="1204.2" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="334.8" y="2129.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="357.0" y="2176.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..1</text>
+<text x="720.0" y="2176.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="914.5" y="2131.6" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1437.6" y="1888.7" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="919.2" y="2186.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1487.3" y="2361.1" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="868.5" y="2199.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1519.6" y="2466.4" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..1</text>
+<text x="1567.5" y="1889.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..1</text>
+<text x="1567.5" y="2359.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..1</text>
+<text x="1660.2" y="2428.9" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1..n</text>
+<text x="2723.7" y="2459.4" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2850.0" y="2467.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2850.0" y="2819.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1567.5" y="1761.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="1567.5" y="1391.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1629.5" y="1864.9" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="1982.6" y="2061.4" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="2033.3" y="2149.6" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1623.9" y="2385.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..1</text>
+<text x="2112.0" y="230.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2418.0" y="1411.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="2328.8" y="1511.2" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1693.8" y="1794.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..1</text>
+<text x="2448.9" y="1507.1" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="2783.3" y="2354.4" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..1</text>
+<text x="2355.3" y="1406.4" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="2120.2" y="1178.3" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..1</text>
+<text x="2040.0" y="708.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2040.0" y="1106.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1978.7" y="1204.2" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1603.6" y="1776.4" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2112.4" y="684.9" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2792.1" y="1108.6" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="2922.0" y="1168.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="3355.5" y="1168.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2850.0" y="1195.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2850.0" y="1568.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1..n</text>
+<text x="2705.3" y="1648.4" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="1692.3" y="1833.7" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2808.1" y="1662.6" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="2808.3" y="2358.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<text x="2891.3" y="1661.6" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">0..n</text>
+<text x="2892.7" y="2359.8" text-anchor="middle" font-size="14" font-weight="bold" fill="#8a1c1c">1</text>
+<!-- <rect x="50" y="2900" width="1450" height="390" fill="#fafafa" stroke="#999"/>
+<text x="70" y="2934" font-weight="bold" font-size="18">Légende (notation de Chen)</text>
+<text x="70" y="2966" font-size="15">• Rectangle : type d&#39;entité — double rectangle : entité faible</text>
+<text x="70" y="2990" font-size="15">• Losange : type d&#39;association, nommé par un verbe — double losange : association identifiante d&#39;une entité faible</text>
+<text x="70" y="3014" font-size="15">• Ovale : attribut — souligné : identifiant ; souligné en pointillés : identifiant partiel ; ovale en pointillés : attribut dérivé</text>
+<text x="70" y="3038" font-size="15">• Triangle « est un » : spécialisation (le sous-type hérite des attributs et de l&#39;identifiant du sur-type)</text>
+<text x="70" y="3062" font-size="15">• Cardinalités min..max lues du côté de l&#39;entité : « un client possède 0..n factures, une facture appartient à 1 client »</text>
+<text x="70" y="3110" font-weight="bold" font-size="17">Règles de gestion non exprimables par les cardinalités</text>
+<text x="70" y="3140" font-size="15">• Un signalement vise soit un vélo, soit une station (exactement l&#39;un des deux).</text>
+<text x="70" y="3164" font-size="15">• Un usager n&#39;a qu&#39;une location en cours et doit avoir un abonnement valide ; un vélo défectueux ne peut être loué.</text>
+<text x="70" y="3188" font-size="15">• La durée et le coût d&#39;une location sont dérivés (dates, formule et tranches tarifaires).</text>
+<text x="70" y="3212" font-size="15">• niveau_batterie n&#39;a de sens que pour un vélo électrique.</text>
+<text x="70" y="3236" font-size="15">• Un vélo en location ou en atelier n&#39;est stationné sur aucune borne.</text> -->
+</svg>

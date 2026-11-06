@@ -1,0 +1,37 @@
+\section{Jeu de données factices}\label{sec:donnees}
+
+Les données sont générées dans la base par les procédures \texttt{sp\_seed\_*} (\texttt{seed.sql}) : référentiel (formules, tranches), stations et bornes, flotte, utilisateurs, abonnements, locations, historiques, facturation, maintenance, régulation et relevés. Plusieurs tailles sont proposées (\texttt{sp\_seed\_petit}, \texttt{sp\_seed\_demo}, \texttt{sp\_seed\_gros}), et \texttt{sp\_seed\_verifier} contrôle la cohérence du résultat.
+
+Pour la génération massive, l'insertion \texttt{INSERT \ldots{} SELECT} en isolation \texttt{REPEATABLE READ} posait un verrou partagé sur chaque ligne lue et faisait déborder la table des verrous d'InnoDB (erreur 1206) : les procédures concernées passent en \texttt{READ COMMITTED}, où la lecture reste cohérente sans verrou.
+
+Le tableau~\ref{tab:volumes} donne les volumes de la base utilisée pour les mesures de performances ; il est lu dans \texttt{data/contexte.csv}, produit par le script de mesure.
+
+\begin{table}[H]\centering
+	\pgfplotstableread[col sep=comma]{data/contexte.csv}\contexte
+	\pgfplotstabletypeset[
+		string type,
+		columns={cle,valeur},
+		columns/cle/.style={column name={Mesure}, column type=l,
+			string replace={date_mesure}{Date de la mesure},
+			string replace={fin_periode}{Fin des périodes mesurées},
+			string replace={repetitions}{Répétitions par mesure},
+			string replace={serveur}{Serveur},
+			string replace={php}{PHP},
+			string replace={innodb_buffer_pool_mo}{Buffer pool InnoDB (Mo)},
+			string replace={taille_base_mo}{Taille de la base (Mo)},
+			string replace={lignes_location}{Locations},
+			string replace={lignes_historique_etat}{Historique des états},
+			string replace={lignes_historique_position}{Historique des positions},
+			string replace={lignes_facture}{Factures},
+			string replace={lignes_abonnement}{Abonnements},
+			string replace={lignes_releve_station}{Relevés de stations},
+			string replace={lignes_velo}{Vélos},
+			string replace={lignes_station}{Stations}},
+		columns/valeur/.style={column name={Valeur}, column type=r},
+		every head row/.style={before row=\toprule, after row=\midrule},
+		every last row/.style={after row=\bottomrule},
+	]\contexte
+	\caption{Contexte et volumes de la base mesurée}\label{tab:volumes}
+\end{table}
+
+\afaire{décrire comment les données sont rendues réalistes (répartition des trajets dans la journée, heures de pointe, durées, part de vélos électriques, pannes).}

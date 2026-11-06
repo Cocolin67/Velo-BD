@@ -1,0 +1,21 @@
+\section{Installation}\label{ann:installation}
+
+Les scripts SQL s'exécutent dans cet ordre avec le compte \texttt{root} : \texttt{schema.sql}, \texttt{triggers.sql}, \texttt{procedures.sql}, \texttt{seed.sql} (puis \texttt{CALL sp\_seed\_petit();}), \texttt{app\_user.sql} et \texttt{demo\_accounts.sql}. Une base existante se met à jour par les scripts de \texttt{database/migrations/}, suivis de \texttt{procedures.sql}.
+
+Configuration recommandée du serveur (\texttt{my.ini}, section \texttt{[mysqld]}) :
+
+\begin{lstlisting}[style=sql]
+event_scheduler=ON              -- événements planifiés
+innodb_buffer_pool_size=4G      -- XAMPP fournit 16M
+innodb_log_file_size=512M       -- environ 25 % du buffer pool
+\end{lstlisting}
+
+L'application s'installe avec \texttt{composer install}, se configure dans \texttt{.env} (mot de passe du compte \texttt{velo\_app}) et se lance avec \texttt{composer start}. La commande \texttt{composer check-db} vérifie la connexion, les droits et la présence des données.
+
+\section{Reproduire les mesures}\label{ann:mesures}
+
+\begin{lstlisting}[style=sql]
+php bin/bench-stats.php --repetitions=5 --periodes=7,30,90,365
+\end{lstlisting}
+
+Le script écrit \texttt{var/bench/procedures.csv} et \texttt{var/bench/contexte.csv}. Copiés dans \texttt{docs/report/data/}, ils mettent à jour automatiquement les tableaux~\ref{tab:volumes} et~\ref{tab:resultats30} ainsi que la figure~\ref{fig:echelle} à la compilation suivante.

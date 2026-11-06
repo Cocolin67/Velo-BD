@@ -1,0 +1,53 @@
+\section{Introduction}
+
+\subsection{Contexte et objectifs}
+
+Le projet de l'UV BD70 consiste à concevoir et développer le système d'information d'un réseau de vélos en libre-service à l'échelle d'une agglomération. Le système gère les stations et leurs bornes, la flotte de vélos mécaniques et électriques, les usagers et leurs abonnements, les locations et leur facturation, la maintenance et la régulation du réseau. Il doit fournir à l'exploitant une vision précise de l'utilisation du réseau (trajets, heures de pointe, stations saturées ou vides) afin d'optimiser le rééquilibrage des vélos.
+
+Le sujet insiste sur deux points, qui ont guidé nos choix :
+\begin{itemize}
+	\item la \textbf{cohérence des données} : un vélo ne peut être qu'à un seul endroit à la fois, une borne n'accueille qu'un vélo, un usager n'emprunte qu'un vélo à la fois ;
+	\item l'\textbf{automatisation des calculs} dans la base : durée et coût des locations, historisation des états et des positions, facturation et expiration des abonnements.
+\end{itemize}
+
+\subsection{Organisation et outils}
+
+\begin{itemize}
+	\item \textbf{SGBD} : MariaDB 10.4 (distribution XAMPP), moteur InnoDB ; scripts SQL versionnés (\texttt{schema.sql}, \texttt{triggers.sql}, \texttt{procedures.sql}, \texttt{seed.sql}) et migrations ré-exécutables.
+	\item \textbf{Application} : PHP~8 avec le micro-framework Slim~4, gabarits Twig, Tailwind CSS et Chart.js pour les graphiques.
+	\item \textbf{Gestion de projet} : dépôt Git commun, une branche de développement (\texttt{dev}), une branche de documentation (\texttt{docs}) et des branches de fonctionnalités.
+\end{itemize}
+
+\afaire{répartition du travail entre les membres de l'équipe et méthode de travail (réunions, outils de suivi).}
+
+\subsection{Couverture du cahier des charges}
+
+Le tableau~\ref{tab:conformite} met en regard chaque exigence du sujet et sa réalisation ; les parties suivantes en détaillent la conception.
+
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.28\linewidth} >{\raggedright\arraybackslash}p{0.52\linewidth} c}
+	\caption{Exigences du sujet et réalisation}\label{tab:conformite}\\
+	\toprule
+	\textbf{Exigence} & \textbf{Réalisation} & \textbf{Interface} \\
+	\midrule\endfirsthead
+	\toprule
+	\textbf{Exigence} & \textbf{Réalisation} & \textbf{Interface} \\
+	\midrule\endhead
+	Inscription, connexion, rôles & tables \texttt{utilisateur}, \texttt{usager}, \texttt{operateur}, \texttt{administrateur} ; procédures \texttt{sp\_inscrire\_usager}, \texttt{sp\_authentifier} ; contrôle d'accès par rôle & oui \\
+	Stations et bornes & tables \texttt{station}, \texttt{borne} ; vue \texttt{v\_stations\_occupation} (vélos disponibles par type, bornes libres, en temps réel) ; création, modification, suppression, recherche et filtres & oui \\
+	Flotte & table \texttt{velo} (type, mise en service, état, batterie, borne) ; contraintes de position et de batterie ; historiques d'état et de position alimentés par déclencheurs & oui \\
+	Abonnements et tarification & tables \texttt{formule}, \texttt{tranche\_tarifaire}, \texttt{abonnement}, \texttt{facture} ; fonction \texttt{fn\_cout\_formule} ; souscription, renouvellement, résiliation ; expiration par événement planifié & oui \\
+	Locations & procédures \texttt{sp\_emprunter\_velo}, \texttt{sp\_rendre\_velo} ; durée calculée par la base, coût calculé par déclencheur ; unicité « une location en cours » par vélo et par abonnement & oui \\
+	Signalements et maintenance & tables \texttt{signalement}, \texttt{intervention} ; file de traitement des signalements ; procédures d'intervention & partielle \\
+	Régulation & procédures \texttt{sp\_stations\_a\_reequilibrer}, \texttt{sp\_proposer\_deplacements} ; tables \texttt{vehicule}, \texttt{tournee}, \texttt{ligne\_tournee} & partielle \\
+	Statistiques et rapports & six procédures \texttt{sp\_stat\_*} ; page à onglets, graphiques, export CSV & oui \\
+	Ajout, modification, suppression, recherche, filtres & stations, comptes, profil ; filtres sur la flotte et les locations ; pagination & oui \\
+	3NF & voir partie~\ref{sec:conception} (dénormalisations contrôlées justifiées) & -- \\
+	Données factices en quantité & procédures \texttt{sp\_seed\_*} ; environ 5~Go (partie~\ref{sec:donnees}) & -- \\
+	Sécurité & compte applicatif à droits minimaux (jusqu'à la colonne), mots de passe bcrypt, jetons CSRF, requêtes préparées & -- \\
+	Rapport de performances & partie~\ref{sec:performances} & -- \\
+	\bottomrule
+\end{longtable}
+}
+
+La maintenance et la régulation ne sont pas exigées dans l'interface par le sujet : elles sont entièrement réalisées dans la base (tables, procédures, données factices), et l'interface en expose une partie (file des signalements, propositions de rééquilibrage).

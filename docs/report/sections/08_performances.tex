@@ -1,0 +1,261 @@
+\section{Analyse des performances}\label{sec:performances}
+
+Cette partie constitue le rapport d'analyse des performances demandé par le sujet. Elle porte sur les requêtes les plus coûteuses du système, les six statistiques, exécutées sur la base complète, et retrace les mesures qui ont conduit à chaque correction.
+
+% Résultats du banc de mesure (php bin/bench-stats.php), copiés dans data/
+\pgfplotstableread[col sep=comma]{data/procedures.csv}\resultats
+
+\subsection{Protocole de mesure}
+
+\begin{itemize}
+	\item \textbf{Base} : jeu de données complet (tableau~\ref{tab:volumes}), environ 5~Go.
+	\item \textbf{Serveur} : MariaDB 10.4.32 (XAMPP) sous Windows~11, 32~Go de RAM.
+	\item \textbf{Méthode} : chaque procédure est appelée directement, sans le cache de l'application, par le script \texttt{bin/bench-stats.php}. Pour chaque longueur de période (7, 30, 90 et 365~jours), le premier appel est noté à part, car il inclut le chargement des pages en mémoire ; la valeur retenue est la \textbf{médiane} des appels suivants.
+	\item \textbf{Exécution de l'application} : les temps de page sont mesurés avec \texttt{curl} sur le serveur PHP intégré, connecté en administrateur, avec et sans le cache applicatif.
+	\item \textbf{Vérification} : chaque requête réécrite a été comparée ligne à ligne à l'ancienne version sur plusieurs périodes ; les résultats sont identiques.
+\end{itemize}
+
+La page de statistiques s'ouvre par défaut sur les 30~derniers jours : c'est la période de référence. L'objectif fixé est un affichage de chaque onglet en moins de 5~secondes sans cache.
+
+\subsection{Constat initial}
+
+Sur la base complète, l'onglet \og Trajets \fg{}, affiché par défaut, ne répondait plus : la requête HTTP restait en attente plus de deux minutes. La mesure de chaque procédure isolément a révélé trois requêtes problématiques : les trajets origine-destination (plus de 60~s), l'indisponibilité de la flotte (plus de 100~s) et, dans une moindre mesure, les recettes par formule (8,8~s). Deux causes, de natures différentes, se cumulaient.
+
+\subsection{Configuration du serveur}
+
+Le paramètre \texttt{innodb\_buffer\_pool\_size}, mémoire qu'InnoDB consacre au cache des données et des index, valait 16~Mo, valeur par défaut de XAMPP, pour une base de près de 5~Go : presque chaque page lue l'était sur le disque. Il a été porté à 4~Go (et \texttt{innodb\_log\_file\_size} à 512~Mo, environ un quart du cache). La figure~\ref{fig:pool} compare les procédures dont la version n'a pas changé entre les deux mesures.
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+	\begin{axis}[
+		ybar, bar width=9pt, width=0.95\linewidth, height=6cm,
+		ymin=0, ylabel={Temps (s)},
+		symbolic x coords={Trajets,Pointe,OD,Remplissage,Recettes,Regulation},
+		xtick=data,
+		xticklabels={Trajets par période, Heures de pointe, Origine-destination, Remplissage, Recettes, Régulation},
+		x tick label style={font=\footnotesize, align=center, text width=2cm},
+		legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize},
+		nodes near coords, every node near coord/.append style={font=\tiny},
+		enlarge x limits=0.1,
+	]
+		\addplot[fill=avant, draw=avant] table[x=requete, y=pool16_s, col sep=comma]{data/buffer_pool.csv};
+		\addplot[fill=apres, draw=apres] table[x=requete, y=pool4096_s, col sep=comma]{data/buffer_pool.csv};
+		\legend{Buffer pool 16 Mo, Buffer pool 4 Go}
+	\end{axis}
+\end{tikzpicture}
+\caption{Effet du cache InnoDB (période de 30 jours, mêmes versions des procédures)}\label{fig:pool}
+\end{figure}
+
+Le gain est le plus fort pour les requêtes qui relisent beaucoup de lignes par clé primaire, comme les recettes (8,8~s $\to$ 1,1~s) : chaque facture de la période est relue dans la table, à des emplacements dispersés. Ce réglage ne suffisait toutefois pas : avec toutes les données en mémoire, l'indisponibilité de la flotte prenait encore 22~s. Le problème restant tenait à la forme des requêtes.
+
+\subsection{Réécriture des requêtes}
+
+La figure~\ref{fig:optimisations} résume les gains obtenus par réécriture, chaque fois à configuration identique.
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+	\begin{axis}[
+		xbar, bar width=8pt, width=0.85\linewidth, height=5.5cm,
+		xmode=log, log basis x=10, xmin=0.3, xmax=200,
+		xlabel={Temps (s, échelle logarithmique)},
+		symbolic y coords={Remplissage,Flotte,OD},
+		ytick=data,
+		yticklabels={Remplissage des stations, Indisponibilité de la flotte, Origine-destination},
+		y tick label style={font=\footnotesize, align=right, text width=3.2cm},
+		legend style={at={(0.98,0.02)}, anchor=south east, font=\footnotesize},
+		nodes near coords, every node near coord/.append style={font=\tiny},
+		enlarge y limits=0.3,
+	]
+		\addplot[fill=avant, draw=avant] table[y=requete, x=avant_s, col sep=comma]{data/optimisations.csv};
+		\addplot[fill=apres, draw=apres] table[y=requete, x=apres_s, col sep=comma]{data/optimisations.csv};
+		\legend{Avant, Après}
+	\end{axis}
+\end{tikzpicture}
+\caption{Temps avant et après réécriture (30 jours). Origine-destination mesurée avec un cache de 16~Mo (avant : interrompue après 60~s) ; les deux autres avec 4~Go.}\label{fig:optimisations}
+\end{figure}
+
+\subsubsection{Trajets origine-destination}
+
+La requête initiale joignait \texttt{location} aux bornes et aux stations de départ et d'arrivée, puis filtrait sur la période. Son plan d'exécution (\texttt{EXPLAIN}) montre que l'optimiseur partait des stations, puis des bornes, puis des locations via l'index des arrivées :
+
+\begin{lstlisting}[style=sql]
+table  type   key                    rows  Extra
+sa     index  uq_station_nom          300  Using temporary; Using filesort
+ba     ref    uq_borne_station_num     13  Using index
+l      ref    idx_loc_arrivee_resti   243  Using where
+\end{lstlisting}
+
+Ce chemin lit \emph{toutes} les locations de chaque borne (environ 5~millions) et ne filtre la date qu'ensuite, alors que la période n'en contient que 406\,000. La version réécrite :
+\begin{itemize}
+	\item impose l'ordre de jointure (\texttt{STRAIGHT\_JOIN}) : la lecture part des locations de la période, par une plage sur l'index couvrant \texttt{idx\_loc\_emprunt}, sans relire la table ;
+	\item regroupe par paire de \emph{stations} (au plus $300^2$ groupes) et non par paire de bornes (jusqu'à $7\,800^2$), ce qui garde la table temporaire en mémoire ; une première réécriture qui regroupait d'abord par bornes prenait encore 27~s ;
+	\item ne joint les noms des stations qu'au résultat agrégé.
+\end{itemize}
+
+\begin{lstlisting}[style=sql]
+SELECT sd.id_station, sd.nom, sa.id_station, sa.nom,
+       x.nb_trajets, ROUND(x.duree_moyenne_min, 1)
+  FROM (SELECT STRAIGHT_JOIN bd.id_station AS id_depart, ba.id_station AS id_arrivee,
+               COUNT(*) AS nb_trajets, AVG(l.duree_min) AS duree_moyenne_min
+          FROM location l
+          JOIN borne bd ON bd.id_borne = l.id_borne_depart
+          JOIN borne ba ON ba.id_borne = l.id_borne_arrivee
+         WHERE l.date_heure_emprunt >= p_debut AND l.date_heure_emprunt < p_fin
+         GROUP BY bd.id_station, ba.id_station) x
+  JOIN station sd ON sd.id_station = x.id_depart
+  JOIN station sa ON sa.id_station = x.id_arrivee
+ ORDER BY x.nb_trajets DESC, sd.nom, sa.nom
+ LIMIT p_limite;
+\end{lstlisting}
+
+Le nouveau plan lit la plage de dates de l'index (\texttt{range}, \texttt{Using index}) puis accède aux bornes par clé primaire (\texttt{eq\_ref}). Temps : plus de 60~s $\to$ 3,5~s avec le cache de 16~Mo, 1,2~s avec 4~Go.
+
+\subsubsection{Indisponibilité de la flotte}
+
+Le taux d'indisponibilité est la part du temps passée \og en atelier \fg{} ou \og défectueux \fg{}, calculée à partir de \texttt{historique\_etat}. La version initiale reconstituait \emph{tous} les intervalles d'état de la période avec la fonction de fenêtre \texttt{LEAD} : sur 30~jours, 813\,000 changements d'état, dont la plupart (\og disponible \fg{} / \og en location \fg{}) sont dus aux locations. La décomposition de la requête a montré deux coûts : la relecture de chaque ligne par clé primaire pour obtenir \texttt{id\_velo} (6~s), absent de l'index utilisé, et la fonction de fenêtre elle-même (environ 4~s, même avec un index couvrant). Ajouter un index ne pouvait donc pas suffire.
+
+Or seuls les intervalles d'indisponibilité comptent au numérateur : il n'y a que 174 passages en atelier ou défectueux sur 30~jours (788 sur un an). La procédure a été réécrite sans fonction de fenêtre :
+\begin{itemize}
+	\item \textbf{numérateur} : pour chaque passage dans un état indisponible pendant la période, ainsi que pour l'état de chaque vélo à l'ouverture de la période, la fin de l'intervalle est l'événement suivant du même vélo, trouvé par une seule lecture de l'index \texttt{(id\_velo, date\_heure)} ;
+	\item \textbf{dénominateur} : les intervalles d'un vélo se suivent sans interruption de son premier événement connu jusqu'à la fin de la période ; le temps observé vaut donc \textit{fin} $-$ max(\textit{début}, \textit{premier événement}), soit une lecture d'index par vélo.
+\end{itemize}
+
+Un dernier écueil est apparu : dans une sous-requête corrélée, MariaDB n'optimise pas \texttt{MIN(date\_heure)} en une simple lecture de la première entrée d'index, et parcourait les quelque 1\,600 entrées de chaque vélo (10~millions au total, 4,9~s). L'écriture équivalente \texttt{ORDER BY date\_heure LIMIT 1} ne lit qu'une entrée.
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+	\begin{axis}[
+		width=0.75\linewidth, height=6cm,
+		xmode=log, ymode=log, log basis x=10,
+		xlabel={Longueur de la période (jours)}, ylabel={Temps (s)},
+		xtick={8,30,365}, xticklabels={8,30,365},
+		legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize},
+		grid=major, grid style={gray!20},
+		nodes near coords, every node near coord/.append style={font=\tiny, anchor=south east},
+	]
+		\addplot[mark=*, color=avant, thick] table[x=jours, y=avant_s, col sep=comma]{data/flotte_periodes.csv};
+		\addplot[mark=square*, color=apres, thick] table[x=jours, y=apres_s, col sep=comma]{data/flotte_periodes.csv};
+		\legend{Avant (fonction de fenêtre), Après (intervalles d'indisponibilité)}
+	\end{axis}
+\end{tikzpicture}
+\caption{Indisponibilité de la flotte selon la longueur de la période (cache de 4~Go)}\label{fig:flotte}
+\end{figure}
+
+Les résultats sont identiques à ceux de l'ancienne version sur 8~jours, 30~jours et un an ; le temps passe de 30~s à 0,7~s sur 30~jours et de 465~s à 6,5~s sur un an (figure~\ref{fig:flotte}).
+
+\subsubsection{Remplissage des stations}
+
+Même défaut que pour les trajets origine-destination : l'optimiseur partait des 300~stations et lisait par clé primaire \emph{tous} les relevés de chacune (2,6~millions) avant de filtrer la date. Les relevés de la période (777\,000) sont désormais agrégés d'abord, par une plage sur l'index couvrant \texttt{idx\_releve\_horodatage}, puis joints aux stations : 2,65~s $\to$ 0,98~s, sur les mêmes 7\,200 lignes de résultat.
+
+\subsubsection{Index couvrants}
+
+Deux index ont été étendus pour que les statistiques ne lisent que l'index, sans relire la table :
+\begin{itemize}
+	\item \texttt{location.idx\_loc\_emprunt} : \texttt{(date\_heure\_emprunt, date\_heure\_restitution, id\_borne\_depart, id\_borne\_arrivee, duree\_min, cout)} ;
+	\item \texttt{releve\_station.idx\_releve\_horodatage} : \texttt{(horodatage, id\_station, nb\_velos\_mecaniques, nb\_velos\_electriques, nb\_bornes\_libres)}.
+\end{itemize}
+La base existante a été mise à jour par une migration ré-exécutable, sans la recréer (partie~\ref{sec:evolution}).
+
+\subsection{Résultats}
+
+\subsubsection{Temps des requêtes principales}
+
+Le tableau~\ref{tab:resultats30} donne le temps de chaque procédure sur la période de référence, après toutes les corrections.
+
+\begin{table}[H]\centering
+	\pgfplotstabletypeset[
+		row predicate/.code={%
+			\pgfplotstablegetelem{#1}{jours}\of{\resultats}%
+			\ifnum\pgfplotsretval=30\relax\else\pgfplotstableuserowfalse\fi},
+		columns={procedure,premier_s,mediane_s,min_s,max_s,lignes},
+		columns/procedure/.style={string type, column name={Procédure}, column type=l,
+			string replace={sp_stat_trajets_par_periode}{Trajets par période},
+			string replace={sp_stat_heures_pointe}{Heures de pointe},
+			string replace={sp_stat_trajets_od}{Trajets origine-destination},
+			string replace={sp_stat_remplissage_stations}{Remplissage des stations},
+			string replace={sp_stat_recettes_par_formule}{Recettes par formule},
+			string replace={sp_stat_indisponibilite_flotte}{Indisponibilité de la flotte},
+			string replace={sp_stations_a_reequilibrer}{Stations à rééquilibrer},
+			string replace={sp_proposer_deplacements}{Déplacements proposés}},
+		columns/premier_s/.style={column name={1\textsuperscript{er} appel (s)}, fixed, precision=2, zerofill},
+		columns/mediane_s/.style={column name={Médiane (s)}, fixed, precision=2, zerofill},
+		columns/min_s/.style={column name={Min (s)}, fixed, precision=2, zerofill},
+		columns/max_s/.style={column name={Max (s)}, fixed, precision=2, zerofill},
+		columns/lignes/.style={column name={Lignes}, int detect},
+		every head row/.style={before row=\toprule, after row=\midrule},
+		every last row/.style={after row=\bottomrule},
+	]\resultats
+	\caption{Temps d'exécution des procédures statistiques sur 30 jours}\label{tab:resultats30}
+\end{table}
+
+\afaire{commenter le total par onglet une fois le banc relancé avec les procédures finales (Trajets : trajets par période + heures de pointe + origine-destination ; Stations : remplissage + rééquilibrage + déplacements ; Recettes : recettes + indisponibilité ; les indicateurs clés, trajets par période et heures de pointe, sont calculés sur chaque onglet).}
+
+\subsubsection{Montée en charge}
+
+La figure~\ref{fig:echelle} montre l'évolution du temps de chaque statistique avec la longueur de la période.
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+	\begin{axis}[
+		width=0.9\linewidth, height=7.5cm,
+		xmode=log, ymode=log, log basis x=10,
+		xlabel={Longueur de la période (jours)}, ylabel={Temps médian (s)},
+		xtick={7,30,90,365}, xticklabels={7,30,90,365},
+		legend style={at={(1.02,1)}, anchor=north west, font=\footnotesize},
+		legend cell align=left,
+		grid=major, grid style={gray!20},
+		cycle list name=exotic,
+		every axis plot/.append style={thick, mark size=1.5pt},
+	]
+		\addplot+[garder si={procedure}{sp_stat_trajets_par_periode}]    table[x=jours, y=mediane_s]{\resultats};
+		\addlegendentry{Trajets par période}
+		\addplot+[garder si={procedure}{sp_stat_heures_pointe}]          table[x=jours, y=mediane_s]{\resultats};
+		\addlegendentry{Heures de pointe}
+		\addplot+[garder si={procedure}{sp_stat_trajets_od}]             table[x=jours, y=mediane_s]{\resultats};
+		\addlegendentry{Origine-destination}
+		\addplot+[garder si={procedure}{sp_stat_remplissage_stations}]   table[x=jours, y=mediane_s]{\resultats};
+		\addlegendentry{Remplissage}
+		\addplot+[garder si={procedure}{sp_stat_recettes_par_formule}]   table[x=jours, y=mediane_s]{\resultats};
+		\addlegendentry{Recettes}
+		\addplot+[garder si={procedure}{sp_stat_indisponibilite_flotte}] table[x=jours, y=mediane_s]{\resultats};
+		\addlegendentry{Indisponibilité}
+		\draw[dashed, avant] (axis cs:5,5) -- (axis cs:500,5) node[pos=0.02, above, font=\tiny, anchor=south west] {objectif 5 s};
+	\end{axis}
+\end{tikzpicture}
+\caption{Temps médian de chaque statistique selon la longueur de la période}\label{fig:echelle}
+\end{figure}
+
+Le temps croît à peu près linéairement avec le nombre de lignes de la période. Les procédures lisent désormais uniquement les lignes utiles, par des plages d'index : leur coût suit donc la taille de la période, et non plus celle de la table entière.
+
+\subsubsection{Temps d'affichage et cache applicatif}
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}
+	\begin{axis}[
+		ybar, bar width=14pt, width=0.6\linewidth, height=5.5cm,
+		ymin=0, ylabel={Temps de réponse (s)},
+		symbolic x coords={Trajets,Stations}, xtick=data,
+		legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize},
+		nodes near coords, every node near coord/.append style={font=\tiny},
+		enlarge x limits=0.5,
+	]
+		\addplot[fill=avant, draw=avant] table[x=onglet, y=sans_cache_s, col sep=comma]{data/page_http.csv};
+		\addplot[fill=apres, draw=apres] table[x=onglet, y=avec_cache_s, col sep=comma]{data/page_http.csv};
+		\legend{Sans cache, Avec cache}
+	\end{axis}
+\end{tikzpicture}
+\caption{Temps de réponse de la page de statistiques (30 jours), avant la réécriture du remplissage}\label{fig:http}
+\end{figure}
+
+Une fois les résultats en cache, chaque onglet s'affiche en environ 0,3~s, quelle que soit la période (figure~\ref{fig:http}).
+
+\afaire{remesurer les trois onglets par HTTP après le chargement des procédures finales et mettre à jour \texttt{data/page\_http.csv}.}
+
+\subsection{Limites et pistes d'amélioration}
+
+\begin{itemize}
+	\item Sur une période d'un an, les statistiques de trajets agrègent l'essentiel des 5~millions de locations : sans cache, l'onglet \og Trajets \fg{} dépasse alors largement l'objectif de 5~s. Le cache d'une heure sur les périodes passées en atténue l'effet, mais le premier calcul reste long.
+	\item La piste naturelle est une \textbf{table d'agrégats journaliers} (trajets par jour et par paire de stations, recettes par jour et par formule), alimentée chaque nuit par un événement planifié : les statistiques liraient quelques milliers de lignes au lieu de plusieurs millions, au prix d'une dénormalisation contrôlée.
+	\item Le partitionnement des grandes tables par date (\texttt{location}, \texttt{historique\_etat}) limiterait aussi les lectures aux partitions de la période.
+	\item Les performances dépendent fortement de la configuration du serveur : avec le cache InnoDB par défaut de 16~Mo, aucune réécriture ne suffit à tenir l'objectif.
+\end{itemize}
