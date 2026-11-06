@@ -43,10 +43,22 @@ Les règles métier restent dans la base : l’application appelle les procédur
 
 ## Prérequis
 
-- **MySQL 8** (ou MariaDB 10.6+), ici sur le port **3307**
+- **MariaDB 10.4+** (testé avec MariaDB 10.4.32 de XAMPP) ou **MySQL 8**, ici sur le port **3307**
 - **PHP 8.2 ou supérieur** avec les extensions `pdo_mysql` et `mbstring`
 - **Composer**
 - une connexion Internet pour les CDN (Tailwind CSS, Chart.js, police Inter).
+
+### Configuration recommandée du serveur
+
+Dans `my.ini` (XAMPP : `C:\xampp\mysql\bin\my.ini`, section `[mysqld]`), puis redémarrer le serveur :
+
+```ini
+event_scheduler=ON              # événements planifiés : expiration des abonnements, facturation, relevés
+innodb_buffer_pool_size=4G      # XAMPP fournit 16M : la base complète (≈ 5 Go) serait relue sur disque à chaque requête
+innodb_log_file_size=512M       # ≈ 25 % du buffer pool
+```
+
+Sans `event_scheduler=ON`, les procédures `sp_expirer_abonnements`, `sp_facturer_locations` et `sp_releve_stations` restent appelables à la main mais ne s’exécutent pas automatiquement.
 
 ## Installation
 
@@ -123,7 +135,11 @@ database/
 ├── procedures.sql      # Vue, procédures métier et statistiques
 ├── seed.sql            # Génération de données factices
 ├── app_user.sql        # Compte MySQL applicatif (moindre privilège)
-└── demo_accounts.sql   # Comptes de démonstration
+├── demo_accounts.sql   # Comptes de démonstration
+└── migrations/         # Mises à jour ré-exécutables d’une base existante
+bin/
+├── check-db.php        # Diagnostic de la connexion (composer check-db)
+└── bench-stats.php     # Banc de mesure des procédures statistiques
 docs/                   # Sujet, diagrammes et rapport
 public/
 └── index.php           # Point d’entrée unique
@@ -133,7 +149,7 @@ src/
 ├── Database/           # Accès PDO et traduction des erreurs SQL
 ├── Middleware/         # Session, CSRF, contrôle d’accès, en-têtes
 ├── Security/           # Authentification et jeton CSRF
-├── Support/            # Session et messages flash
+├── Support/            # Session, messages flash et cache des statistiques
 └── Twig/               # Filtres et fonctions des templates
 templates/              # Vues Twig (layout Tailwind, composants, pages)
 ```
@@ -141,6 +157,14 @@ templates/              # Vues Twig (layout Tailwind, composants, pages)
 Les requêtes principales se trouvent dans `src/Repository/`, ce qui facilite le rapport de performances. La page *Statistiques* affiche aussi le temps d’exécution de chaque procédure appelée.
 
 La page *Statistiques* est découpée en onglets (seules les procédures de l’onglet affiché sont exécutées), ses tableaux sont paginés et ses résultats sont mis en cache dans `var/cache/app` (1 h pour une période passée, 5 min si elle inclut aujourd’hui, 30 s pour le temps réel ; durées réglables dans `config/settings.php`). Le lien « Recalculer sans le cache » permet de mesurer le temps réel des procédures.
+
+### Mesurer les performances
+
+```bash
+php bin/bench-stats.php --repetitions=5 --periodes=7,30,90,365
+```
+
+Le script appelle chaque procédure `sp_stat_*` directement (sans le cache de l’application) pour plusieurs longueurs de période et écrit dans `var/bench/` deux fichiers CSV : `procedures.csv` (premier appel, médiane, min, max, nombre de lignes) et `contexte.csv` (version du serveur, taille du buffer pool, volumes des tables). Ces fichiers alimentent les graphiques du rapport.
 
 ## Documentation du projet
 
