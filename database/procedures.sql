@@ -946,21 +946,33 @@ BEGIN
 END$$
 
 -- Trajets origine-destination les plus fréquents (entre stations)
+--
+-- Optimisation : STRAIGHT_JOIN impose de partir des LOCATIONS de la période (plage sur
+-- l'index couvrant idx_loc_emprunt) puis de remonter aux bornes par clé primaire.
+-- Laissé libre, l'optimiseur partait de station -> borne -> location (index des
+-- arrivées) et parcourait les 5 M de locations (plus de 60 s sur la base complète).
+-- Le regroupement se fait sur les seuls identifiants de stations (au plus 300² groupes,
+-- table temporaire en mémoire) ; les noms ne sont joints qu'au résultat agrégé.
 DROP PROCEDURE IF EXISTS sp_stat_trajets_od$$
 CREATE PROCEDURE sp_stat_trajets_od(IN p_debut DATETIME, IN p_fin DATETIME, IN p_limite INT)
 BEGIN
     SELECT sd.id_station AS id_station_depart,  sd.nom AS station_depart,
            sa.id_station AS id_station_arrivee, sa.nom AS station_arrivee,
-           COUNT(*)                  AS nb_trajets,
-           ROUND(AVG(l.duree_min), 1) AS duree_moyenne_min
-      FROM location l
-      JOIN borne   bd ON bd.id_borne   = l.id_borne_depart
-      JOIN station sd ON sd.id_station = bd.id_station
-      JOIN borne   ba ON ba.id_borne   = l.id_borne_arrivee
-      JOIN station sa ON sa.id_station = ba.id_station
-     WHERE l.date_heure_emprunt >= p_debut AND l.date_heure_emprunt < p_fin
-     GROUP BY sd.id_station, sd.nom, sa.id_station, sa.nom
-     ORDER BY nb_trajets DESC, sd.nom, sa.nom
+           x.nb_trajets,
+           ROUND(x.duree_moyenne_min, 1) AS duree_moyenne_min
+      FROM (SELECT STRAIGHT_JOIN
+                   bd.id_station AS id_depart,
+                   ba.id_station AS id_arrivee,
+                   COUNT(*)          AS nb_trajets,
+                   AVG(l.duree_min)  AS duree_moyenne_min
+              FROM location l
+              JOIN borne bd ON bd.id_borne = l.id_borne_depart
+              JOIN borne ba ON ba.id_borne = l.id_borne_arrivee
+             WHERE l.date_heure_emprunt >= p_debut AND l.date_heure_emprunt < p_fin
+             GROUP BY bd.id_station, ba.id_station) x
+      JOIN station sd ON sd.id_station = x.id_depart
+      JOIN station sa ON sa.id_station = x.id_arrivee
+     ORDER BY x.nb_trajets DESC, sd.nom, sa.nom
      LIMIT p_limite;
 END$$
 
@@ -1023,10 +1035,15 @@ DROP PROCEDURE IF EXISTS sp_stat_indisponibilite_flotte$$
 CREATE PROCEDURE sp_stat_indisponibilite_flotte(IN p_debut DATETIME, IN p_fin DATETIME)
 BEGIN
     WITH bornes_hist AS (
-        -- changements d'état survenus pendant la période (index idx_hist_etat_velo_date / _etat_date)
+        -- changements d'état survenus pendant la période.
+        -- Aucun index ne commence par date_heure : le filtre sur les 4 valeurs de l'ENUM
+        -- (NOT NULL, donc sans effet sur le résultat) permet à l'optimiseur de lire
+        -- idx_hist_etat_etat_date (etat_velo, date_heure) en 4 plages de dates au lieu
+        -- de parcourir l'index entier (10 M d'entrées).
         SELECT h.id_hist_etat
           FROM historique_etat h
-         WHERE h.date_heure >= p_debut AND h.date_heure < p_fin
+         WHERE h.etat_velo IN ('disponible', 'en_location', 'en_atelier', 'defectueux')
+           AND h.date_heure >= p_debut AND h.date_heure < p_fin
         UNION ALL
         -- état de chaque vélo à l'ouverture de la période
         SELECT (SELECT h.id_hist_etat
