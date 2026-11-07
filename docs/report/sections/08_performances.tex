@@ -9,7 +9,8 @@ Cette partie constitue le rapport d'analyse des performances demandé par le suj
 
 \begin{itemize}
 	\item \textbf{Base} : jeu de données complet (tableau~\ref{tab:volumes}), environ 5~Go.
-	\item \textbf{Serveur} : MariaDB 10.4.32 (XAMPP) sous Windows~11, 32~Go de RAM.
+	\item \textbf{Serveur} : MariaDB 10.4.32 (XAMPP) sous Windows~11, 32~Go de RAM, cache InnoDB de 4~Go, ordonnanceur d'événements actif (\texttt{event\_scheduler=ON}) : un relevé des stations, planifié toutes les 15~minutes, peut ponctuellement s'exécuter pendant une mesure, ce que la médiane absorbe.
+	\item \textbf{Procédures} : version finale de la branche \texttt{dev}, rechargée avant la mesure. Un premier passage avait été lancé par erreur sur les anciennes procédures : il redonnait les temps d'avant correction (415~s pour l'indisponibilité sur 30~jours), ce qui confirme au passage l'effet des réécritures.
 	\item \textbf{Méthode} : chaque procédure est appelée directement, sans le cache de l'application, par le script \texttt{bin/bench-stats.php}. Pour chaque longueur de période (7, 30, 90 et 365~jours), le premier appel est noté à part, car il inclut le chargement des pages en mémoire ; la valeur retenue est la \textbf{médiane} des appels suivants.
 	\item \textbf{Exécution de l'application} : les temps de page sont mesurés avec \texttt{curl} sur le serveur PHP intégré, connecté en administrateur, avec et sans le cache applicatif.
 	\item \textbf{Vérification} : chaque requête réécrite a été comparée ligne à ligne à l'ancienne version sur plusieurs périodes ; les résultats sont identiques.
@@ -188,7 +189,24 @@ Le tableau~\ref{tab:resultats30} donne le temps de chaque procédure sur la pér
 	\caption{Temps d'exécution des procédures statistiques sur 30 jours}\label{tab:resultats30}
 \end{table}
 
-\afaire{commenter le total par onglet une fois le banc relancé avec les procédures finales (Trajets : trajets par période + heures de pointe + origine-destination ; Stations : remplissage + rééquilibrage + déplacements ; Recettes : recettes + indisponibilité ; les indicateurs clés, trajets par période et heures de pointe, sont calculés sur chaque onglet).}
+Les écarts avec les temps cités plus haut (origine-destination : 1,2~s lors de la mise au point, 2,0~s ici) tiennent à la variabilité d'une machine de bureau ; les ordres de grandeur sont stables.
+
+Chaque onglet de la page n'exécute que ses propres procédures, plus les indicateurs clés (trajets par période et heures de pointe) affichés en tête de chaque onglet. En additionnant les médianes, on obtient le temps de calcul de chaque onglet (tableau~\ref{tab:onglets}).
+
+\begin{table}[H]\centering
+	\begin{tabular}{lp{7.2cm}rrr}
+		\toprule
+		Onglet & Procédures appelées & 30~j & 90~j & 365~j \\
+		\midrule
+		Trajets & indicateurs + origine-destination & 3,1~s & 9,7~s & 30,6~s \\
+		Stations & indicateurs + remplissage + rééquilibrage + déplacements & 2,4~s & 7,4~s & 17,5~s \\
+		Recettes & indicateurs + recettes + indisponibilité & 3,3~s & 8,8~s & 28,0~s \\
+		\bottomrule
+	\end{tabular}
+	\caption{Temps de calcul de chaque onglet, sans cache (somme des médianes)}\label{tab:onglets}
+\end{table}
+
+Sur la période de référence de 30~jours, les trois onglets respectent l'objectif de 5~s, avec une marge de 35 à 50~\%. Au-delà de trois mois, l'objectif n'est plus tenu sans cache (voir les limites ci-dessous).
 
 \subsubsection{Montée en charge}
 
@@ -234,7 +252,7 @@ Le temps croît à peu près linéairement avec le nombre de lignes de la pério
 	\begin{axis}[
 		ybar, bar width=14pt, width=0.6\linewidth, height=5.5cm,
 		ymin=0, ylabel={Temps de réponse (s)},
-		symbolic x coords={Trajets,Stations}, xtick=data,
+		symbolic x coords={Trajets,Stations,Recettes}, xtick=data,
 		legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize},
 		nodes near coords, every node near coord/.append style={font=\tiny},
 		enlarge x limits=0.5,
@@ -244,17 +262,15 @@ Le temps croît à peu près linéairement avec le nombre de lignes de la pério
 		\legend{Sans cache, Avec cache}
 	\end{axis}
 \end{tikzpicture}
-\caption{Temps de réponse de la page de statistiques (30 jours), avant la réécriture du remplissage}\label{fig:http}
+\caption{Temps de réponse de chaque onglet de la page de statistiques (30 jours, médiane de 3 requêtes)}\label{fig:http}
 \end{figure}
 
-Une fois les résultats en cache, chaque onglet s'affiche en environ 0,3~s, quelle que soit la période (figure~\ref{fig:http}).
-
-\afaire{remesurer les trois onglets par HTTP après le chargement des procédures finales et mettre à jour \texttt{data/page\_http.csv}.}
+Mesurés de bout en bout par HTTP, avec le lien \og Recalculer sans le cache \fg{}, les onglets répondent en 3,0~s (Trajets), 2,5~s (Stations) et 3,4~s (Recettes) : le rendu PHP et Twig n'ajoute que quelques dixièmes de seconde au calcul des procédures. Une fois les résultats en cache, chaque onglet s'affiche en moins de 0,1~s, quelle que soit la période (figure~\ref{fig:http}). Lors d'une mesure intermédiaire, avec la requête origine-destination déjà réécrite mais pas encore le remplissage, l'onglet Stations prenait 5,1~s : c'est ce dépassement qui a motivé la dernière réécriture.
 
 \subsection{Limites et pistes d'amélioration}
 
 \begin{itemize}
-	\item Sur une période d'un an, les statistiques de trajets agrègent l'essentiel des 5~millions de locations : sans cache, l'onglet \og Trajets \fg{} dépasse alors largement l'objectif de 5~s. Le cache d'une heure sur les périodes passées en atténue l'effet, mais le premier calcul reste long.
+	\item Sur une période d'un an, les statistiques de trajets agrègent l'essentiel des 5~millions de locations : sans cache, les onglets prennent alors de 17 à 31~s (tableau~\ref{tab:onglets}), la requête origine-destination à elle seule 16,5~s. Le cache d'une heure sur les périodes passées en atténue l'effet, mais le premier calcul reste long.
 	\item La piste naturelle est une \textbf{table d'agrégats journaliers} (trajets par jour et par paire de stations, recettes par jour et par formule), alimentée chaque nuit par un événement planifié : les statistiques liraient quelques milliers de lignes au lieu de plusieurs millions, au prix d'une dénormalisation contrôlée.
 	\item Le partitionnement des grandes tables par date (\texttt{location}, \texttt{historique\_etat}) limiterait aussi les lectures aux partitions de la période.
 	\item Les performances dépendent fortement de la configuration du serveur : avec le cache InnoDB par défaut de 16~Mo, aucune réécriture ne suffit à tenir l'objectif.

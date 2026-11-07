@@ -225,7 +225,7 @@
 	{\bfseries\large Résumé}\\[2ex]
 	Ce rapport présente la conception et la réalisation d'un système d'information pour un réseau de vélos en libre-service : une base de données relationnelle MariaDB en troisième forme normale, dont les règles métier (un vélo à un seul endroit, une borne par vélo, une location à la fois par usager, calcul automatique de la durée et du coût) sont garanties par des contraintes, des déclencheurs et des procédures stockées, et une application web PHP (Slim 4, Twig) qui l'exploite selon trois rôles : usager, opérateur et administrateur.
 
-	La base a été peuplée avec un jeu de données factices de près de 5~Go (5~millions de locations, 10~millions d'événements historisés). À ce volume, plusieurs statistiques ne répondaient plus en un temps raisonnable : une démarche de mesure, d'analyse des plans d'exécution et de réécriture des requêtes a ramené chaque onglet de la page de statistiques sous 5~secondes, avec des gains allant jusqu'à un facteur 70 sur la requête la plus coûteuse. Le rapport détaille ces évolutions et les mesures qui les justifient.
+	La base a été peuplée avec un jeu de données factices de près de 5~Go (5~millions de locations, 10~millions d'événements historisés). À ce volume, plusieurs statistiques ne répondaient plus en un temps raisonnable : une démarche de mesure, d'analyse des plans d'exécution et de réécriture des requêtes a ramené chaque onglet de la page de statistiques sous 5~secondes sur la période par défaut de 30~jours (de 2,5 à 3,4~s sans cache, moins de 0,1~s avec), avec des gains allant jusqu'à un facteur 70 sur la requête la plus coûteuse. Le rapport détaille ces évolutions et les mesures qui les justifient.
 
 	\clearpage
 
