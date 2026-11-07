@@ -1,0 +1,51 @@
+\section{Jeu de données factices}\label{sec:donnees}
+
+\subsection{Génération}
+
+Les données sont générées dans la base par les procédures \texttt{sp\_seed\_*} (\texttt{seed.sql}) : référentiel (formules, tranches), stations et bornes, flotte, utilisateurs, abonnements, locations, historiques, facturation, maintenance, régulation et relevés. Trois tailles sont proposées : \texttt{sp\_seed\_petit} (50\,000 locations, pour les tests), \texttt{sp\_seed\_demo} (1~million) et \texttt{sp\_seed\_gros} (300~stations, 6\,000~vélos, 500\,000~usagers et 5~millions de locations), utilisée pour les mesures. La procédure \texttt{sp\_seed\_verifier} contrôle ensuite la cohérence du résultat.
+
+Toutes les lignes sont produites par des requêtes ensemblistes (\texttt{INSERT \ldots{} SELECT}) par paquets, sans boucle ligne à ligne. Pendant le chargement, la variable de session \texttt{@seed\_mode} désactive les déclencheurs : le générateur écrit lui-même des historiques cohérents. L'insertion massive en isolation \texttt{REPEATABLE READ} posait un verrou partagé sur chaque ligne lue et faisait déborder la table des verrous d'InnoDB (erreur 1206) : les procédures concernées passent en \texttt{READ COMMITTED}, où la lecture reste cohérente sans verrou.
+
+\subsection{Réalisme des données}
+
+Pour que les statistiques et les mesures de performances aient un sens, les données reproduisent les régularités d'un vrai réseau sur une année d'historique :
+\begin{itemize}
+	\item \textbf{heures de pointe} : 27~\% des trajets sont tirés autour de 8~h~15, 30~\% autour de 17~h~45 et 13~\% autour de midi (lois normales), le reste uniformément entre 6~h et 23~h ;
+	\item \textbf{saisonnalité} : environ un tiers de trajets en moins le week-end et pendant les mois d'hiver ;
+	\item \textbf{durées} : la plupart des trajets durent quelques minutes à une demi-heure (loi exponentielle de moyenne 14~min au-delà de 3~min), 3~\% sont de longues locations d'une à onze heures, ce qui fait apparaître des coûts au-delà de la durée gratuite ;
+	\item \textbf{géographie} : les stations sont réparties sur une zone d'environ 13~$\times$~15~km ; 70~\% des arrivées sont attirées vers les stations du centre, ce qui crée des stations saturées et des stations vides, et donc un besoin de régulation ;
+	\item \textbf{continuité des vélos} : chaque vélo suit une chaîne de trajets sans chevauchement, chaque trajet partant de la borne où le précédent s'est terminé ;
+	\item \textbf{clientèle} : 45~\% d'abonnés annuels, 10~\% au tarif réduit, 30~\% d'abonnés mensuels (abonnements de 30~jours successifs) et 15~\% d'usagers occasionnels, à qui un ticket journée est créé et facturé pour chaque jour d'utilisation ;
+	\item \textbf{état courant} : environ 0,8~\% des vélos sont en location, 1,2~\% en atelier (intervention ouverte) et 2~\% signalés défectueux ; les signalements, interventions et historiques passés sont cohérents avec ces états.
+\end{itemize}
+
+Quelques simplifications demeurent : la capacité des bornes n'est pas simulée dans le temps (seule la position actuelle respecte \og une borne, un vélo \fg{}), et les déplacements des tournées de régulation ne sont pas reportés dans l'historique des positions.
+
+\subsection{Volumes}
+
+Le tableau~\ref{tab:volumes} donne les volumes de la base utilisée pour les mesures de performances ; il est lu dans \texttt{data/contexte.csv}, produit par le script de mesure.
+
+% Valeur de la ligne #1 (numérotée à partir de 0, dans l'ordre écrit par bench-stats.php)
+\pgfplotstableread[col sep=comma]{data/contexte.csv}\contexte
+\newcommand{\ctx}[1]{\pgfplotstablegetelem{#1}{valeur}\of{\contexte}\pgfplotsretval}
+\newcommand{\ctxn}[1]{\pgfplotstablegetelem{#1}{valeur}\of{\contexte}\pgfmathprintnumber{\pgfplotsretval}}
+\newcommand{\ctxgo}[1]{\pgfplotstablegetelem{#1}{valeur}\of{\contexte}%
+	\pgfmathparse{\pgfplotsretval/1024}\pgfmathprintnumber[fixed, precision=1]{\pgfmathresult}~Go}
+
+\begin{table}[htbp]\centering\small
+	\begin{tabular}{lr@{\hspace{2.5em}}lr}
+		\toprule
+		\multicolumn{2}{l}{\textbf{Environnement}} & \multicolumn{2}{l}{\textbf{Volumes (lignes)}} \\
+		\midrule
+		Date de la mesure      & \ctx{0}           & Locations               & \ctxn{8} \\
+		Heure                  & \ctx{1}           & Historique des états    & \ctxn{9} \\
+		Fin des périodes       & \ctx{2}           & Historique des positions & \ctxn{10} \\
+		Répétitions par mesure & \ctx{3}           & Factures                & \ctxn{11} \\
+		Serveur                & \ctx{4}           & Abonnements             & \ctxn{12} \\
+		PHP                    & \ctx{5}           & Relevés de stations     & \ctxn{13} \\
+		Cache InnoDB           & \ctxgo{6}         & Vélos                   & \ctxn{14} \\
+		Taille de la base      & \ctxgo{7}         & Stations                & \ctxn{15} \\
+		\bottomrule
+	\end{tabular}
+	\caption{Contexte et volumes de la base mesurée}\label{tab:volumes}
+\end{table}

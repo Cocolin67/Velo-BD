@@ -1,0 +1,47 @@
+\section{Évolution du projet}\label{sec:evolution}
+
+\subsection{Chronologie}
+
+Le tableau~\ref{tab:chronologie} retrace les étapes du projet d'après l'historique du dépôt Git.
+
+{\small
+\begin{longtable}{l l >{\raggedright\arraybackslash}p{0.6\linewidth}}
+	\caption{Principales étapes du projet}\label{tab:chronologie}\\
+	\toprule
+	\textbf{Date} & \textbf{Auteur} & \textbf{Étape} \\
+	\midrule\endfirsthead
+	\toprule
+	\textbf{Date} & \textbf{Auteur} & \textbf{Étape} \\
+	\midrule\endhead
+	\bottomrule\endlastfoot
+	29/10/2026 & C. Aubert & Prototype d'interface en PHP natif : pages de base, navigation, transitions, thème sombre. \\
+	31/10/2026 & A. Prévost & Refonte de l'architecture du dépôt. \\
+	01/11/2026 & A. Prévost & Diagrammes (cas d'utilisation, modèles conceptuel et logique) ; schéma SQL, contraintes et index ; déclencheurs et procédures ; premières procédures de génération de données. \\
+	05/11/2026 & A. Prévost & Correction du chargement massif (débordement de la table des verrous InnoDB) ; compte applicatif à droits minimaux et comptes de démonstration. \\
+	05/11/2026 & A. Prévost & Réécriture de l'application avec Slim~4 et Twig : authentification et rôles, stations, abonnements, locations, statistiques, signalements, flotte, tableaux de bord et gestion des comptes. \\
+	05/11/2026 & A. Gratia & Schéma entité-association ; première optimisation de la page de statistiques : onglets, pagination, cache applicatif, index couvrants, réécriture des procédures de recettes et d'indisponibilité. \\
+	06/11/2026 & A. Prévost & Tests sur la base complète (5~Go) : migration des index, configuration du serveur, réécriture des statistiques origine-destination, d'indisponibilité de la flotte et de remplissage ; banc de mesure automatisé. \\
+	07/11/2026 & A. Prévost & Mesures finales et rédaction du rapport ; compilation automatisée (conversion des diagrammes SVG). \\
+\end{longtable}
+}
+
+Au-delà de l'historique, trois choix ont structuré le projet :
+\begin{itemize}
+	\item \textbf{les règles métier dans la base} : contraintes, déclencheurs et procédures garantissent la cohérence quelle que soit l'application qui écrit, et l'application se contente d'afficher les erreurs levées ; ce choix a été fait dès le schéma SQL et n'a pas été remis en cause ;
+	\item \textbf{des scripts ré-exécutables plutôt qu'une base partagée} : chaque membre reconstruit la base sur son poste à partir du dépôt, ce qui a imposé des scripts idempotents, puis des migrations quand la base est devenue trop volumineuse pour être recréée ;
+	\item \textbf{un générateur de données intégré à la base} plutôt qu'un jeu de données importé : la volumétrie se règle par paramètres, et les mesures de performances peuvent être reproduites sur une base de même taille.
+\end{itemize}
+
+\subsection{D'un prototype PHP natif à une application structurée}
+
+Le premier prototype mêlait requêtes SQL et affichage dans des pages PHP. Pour la version finale, l'application a été restructurée autour de Slim~4 : routes groupées par rôle, middlewares de session, de CSRF et de contrôle d'accès, contrôleurs par domaine et repositories qui regroupent toutes les requêtes. Ce découpage rend chaque requête identifiable et mesurable, ce qui a facilité l'analyse des performances.
+
+\subsection{Problèmes rencontrés et solutions}
+
+\begin{description}
+	\item[Débordement des verrous lors du chargement massif.] En isolation \texttt{REPEATABLE READ}, un \texttt{INSERT \ldots{} SELECT} pose un verrou partagé sur chaque ligne lue ; sur plusieurs millions de locations, la table des verrous d'InnoDB débordait (erreur 1206). Les procédures de génération passent en \texttt{READ COMMITTED}.
+	\item[Différences entre MySQL et MariaDB.] MariaDB signale une violation de contrainte \texttt{CHECK} par le code 4025 et non 3819 comme MySQL~8 : la couche d'accès aux données traduit les deux en message métier.
+	\item[Droits du compte applicatif.] Après une recréation de la base, le compte \texttt{velo\_app} avait perdu son droit \texttt{SELECT, EXECUTE} sur la base : toutes les pages échouaient. Le script \texttt{bin/check-db.php} diagnostique désormais la connexion, les droits et la présence des données.
+	\item[Page de statistiques bloquée sur la base complète.] Avec le volume final, l'onglet affiché par défaut ne répondait plus. L'analyse, les corrections et les mesures font l'objet de la partie~\ref{sec:performances}.
+	\item[Mise à jour d'une base de plusieurs gigaoctets.] Recréer la base pour modifier un index n'était plus envisageable. Les changements de schéma passent par des migrations ré-exécutables (\texttt{database/migrations/}) qui ne reconstruisent un index que si sa définition diffère, sans bloquer la table (\texttt{ALGORITHM=INPLACE, LOCK=NONE}).
+\end{description}

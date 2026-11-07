@@ -1,0 +1,35 @@
+\section{Analyse des besoins}\label{sec:besoins}
+
+\subsection{Acteurs}
+
+\begin{itemize}
+	\item \textbf{Visiteur} : consulte la disponibilité du réseau, s'inscrit, se connecte.
+	\item \textbf{Usager} : souscrit et gère son abonnement, emprunte et restitue des vélos, consulte ses trajets et ses factures, signale un problème.
+	\item \textbf{Opérateur} (régulation ou maintenance) : suit la flotte et les locations, traite les signalements, consulte les statistiques et les propositions de rééquilibrage.
+	\item \textbf{Administrateur} : droits de l'opérateur, plus la gestion des stations, des bornes et des comptes.
+\end{itemize}
+
+\diagramme{use_cases}{Diagramme de cas d'utilisation}
+
+Le diagramme (figure~\ref{fig:use_cases}) organise les acteurs en hiérarchie : l'\textbf{utilisateur authentifié} est l'acteur générique (s'authentifier, signaler un problème) ; l'\textbf{usager} et l'\textbf{opérateur} en héritent, et l'\textbf{administrateur} est un opérateur doté de droits supplémentaires (comptes, description des stations). Dans l'application, un visiteur non connecté peut en outre consulter la disponibilité du réseau et s'inscrire.
+
+Les cas d'utilisation se regroupent en trois familles :
+\begin{itemize}
+	\item \textbf{usage du réseau} (usager) : s'abonner, gérer sa souscription, se désabonner, emprunter et rendre un vélo ;
+	\item \textbf{exploitation} (opérateur) : tournées de rééquilibrage, opérations de maintenance, consultation des statistiques ;
+	\item \textbf{administration} : gestion des comptes et description des stations.
+\end{itemize}
+
+Un acteur secondaire, le \textbf{système}, représente les traitements automatiques de la base. Les relations \og include \fg{} montrent qu'emprunter ou rendre un vélo déclenche toujours l'historisation de son état et de sa position, et que l'abonnement entraîne la facturation ; les relations \og extend \fg{} marquent les cas facultatifs, comme la gestion ou la résiliation d'une souscription existante. Ces inclusions correspondent directement aux déclencheurs et aux événements planifiés de la partie~\ref{sec:implementation}.
+
+\subsection{Règles métier}
+
+Les règles suivantes, issues du sujet, sont garanties par la base elle-même et non par l'application (partie~\ref{sec:implementation}) :
+\begin{enumerate}
+	\item un vélo ne peut être qu'à un seul endroit à la fois (sur une borne, en location ou en atelier) ;
+	\item une borne n'accueille qu'un seul vélo ;
+	\item un usager n'emprunte qu'un vélo à la fois, et seulement avec un abonnement valide ;
+	\item un vélo signalé défectueux ou en atelier ne peut pas être emprunté ;
+	\item la durée et le coût d'une location sont calculés automatiquement à la restitution ;
+	\item tout changement d'état ou de position d'un vélo est historisé.
+\end{enumerate}

@@ -1,0 +1,17 @@
+cle,valeur
+date_mesure,2026-11-07
+heure_mesure,13h29
+fin_periode,2026-11-07
+repetitions,5
+serveur,10.4.32-MariaDB
+php,8.5.0
+innodb_buffer_pool_mo,4096
+taille_base_mo,4779
+lignes_location,4993545
+lignes_historique_etat,9994149
+lignes_historique_position,9993695
+lignes_facture,4167903
+lignes_abonnement,2621808
+lignes_releve_station,2595600
+lignes_velo,6000
+lignes_station,300

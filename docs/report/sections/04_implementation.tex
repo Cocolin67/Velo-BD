@@ -1,0 +1,91 @@
+\section{Implémentation SQL}\label{sec:implementation}
+
+Les règles métier sont implémentées dans la base : l'application n'exécute aucune écriture directe sur les tables sensibles et appelle des procédures stockées, dont elle affiche tels quels les messages d'erreur levés par \texttt{SIGNAL}.
+
+\subsection{Déclencheurs et historisation}
+
+\begin{itemize}
+	\item \texttt{trg\_velo\_ai}, \texttt{trg\_velo\_au} : historisation de chaque changement d'état (\texttt{historique\_etat}) et de position (\texttt{historique\_position}) d'un vélo ; chaque changement de position ferme la ligne ouverte (date de fin renseignée) et en ouvre une nouvelle ;
+	\item \texttt{trg\_location\_bi}, \texttt{trg\_location\_bu} : contrôle des règles d'emprunt (abonnement valide, un seul vélo à la fois, vélo disponible) et calcul automatique du coût à la restitution ;
+	\item \texttt{trg\_abonnement\_bi} : un seul abonnement actif à la fois par usager ;
+	\item \texttt{trg\_signalement\_ai} : un vélo signalé défectueux ne peut plus être emprunté.
+\end{itemize}
+
+Pendant le chargement massif des données factices, les procédures de génération positionnent la variable de session \texttt{@seed\_mode} : les déclencheurs sont alors inactifs pour cette session uniquement, le générateur produisant lui-même des historiques cohérents. Cela évite plusieurs millions d'exécutions de déclencheurs.
+
+Le déclencheur \texttt{trg\_velo\_au} illustre le principe. Il compare l'ancienne et la nouvelle ligne du vélo : un changement d'état ajoute une ligne à \texttt{historique\_etat} ; un changement de position (borne, location ou atelier) ferme la période ouverte de \texttt{historique\_position} et en ouvre une nouvelle. Aucune procédure n'a donc à penser à l'historique : il suffit de mettre à jour le vélo.
+
+\begin{lstlisting}[style=sql]
+CREATE TRIGGER trg_velo_au AFTER UPDATE ON velo
+FOR EACH ROW
+BEGIN
+    DECLARE v_ancienne VARCHAR(12);
+    DECLARE v_nouvelle VARCHAR(12);
+
+    IF COALESCE(@seed_mode, 0) = 0 THEN          -- inactif pendant le chargement massif
+        IF NOT (OLD.etat_velo <=> NEW.etat_velo) THEN
+            INSERT INTO historique_etat (id_velo, date_heure, etat_velo)
+            VALUES (NEW.id_velo, NOW(), NEW.etat_velo);
+        END IF;
+
+        -- position : sur une borne, en location ou hors réseau (atelier)
+        SET v_ancienne = IF(OLD.id_borne IS NOT NULL, 'borne',
+                            IF(OLD.etat_velo = 'en_location', 'en_location', 'en_atelier'));
+        SET v_nouvelle = IF(NEW.id_borne IS NOT NULL, 'borne',
+                            IF(NEW.etat_velo = 'en_location', 'en_location', 'en_atelier'));
+
+        IF NOT (OLD.id_borne <=> NEW.id_borne) OR v_ancienne <> v_nouvelle THEN
+            UPDATE historique_position          -- ferme la période en cours
+               SET date_heure_fin = NOW()
+             WHERE id_velo = NEW.id_velo AND date_heure_fin IS NULL;
+            INSERT INTO historique_position     -- ouvre la nouvelle
+                   (id_velo, id_borne, date_heure_debut, type_position)
+            VALUES (NEW.id_velo, NEW.id_borne, NOW(), v_nouvelle);
+        END IF;
+    END IF;
+END
+\end{lstlisting}
+
+L'opérateur \texttt{<=>} (égalité sûre vis-à-vis de \texttt{NULL}) est indispensable : \texttt{id\_borne} vaut \texttt{NULL} pendant une location, et une comparaison \texttt{<>} ordinaire renverrait \texttt{NULL}, donc ne détecterait pas le départ ou l'arrivée du vélo.
+
+\subsection{Procédures et fonctions métier}
+
+\begin{itemize}
+	\item locations : \texttt{sp\_emprunter\_velo}, \texttt{sp\_rendre\_velo} (transactions, verrouillage du vélo et de la borne) ;
+	\item abonnements : \texttt{sp\_souscrire\_abonnement}, \texttt{sp\_renouveler\_abonnement}, \texttt{sp\_resilier\_abonnement}, \texttt{sp\_expirer\_abonnements} ;
+	\item facturation : \texttt{fn\_cout\_formule}, \texttt{fn\_calculer\_cout} (durée gratuite, tranches, supplément électrique), \texttt{sp\_facturer\_locations} ;
+	\item maintenance : \texttt{sp\_signaler\_probleme}, \texttt{sp\_ouvrir\_intervention}, \texttt{sp\_demarrer\_reparation}, \texttt{sp\_cloturer\_intervention} ;
+	\item régulation : \texttt{sp\_stations\_a\_reequilibrer}, \texttt{sp\_proposer\_deplacements}, \texttt{sp\_demarrer\_tournee}, \texttt{sp\_deplacer\_velo\_tournee}, \texttt{sp\_terminer\_tournee} ;
+	\item statistiques : six procédures \texttt{sp\_stat\_*} (partie~\ref{sec:performances}).
+\end{itemize}
+
+Le coût d'un trajet suit la formule de l'abonnement : les \texttt{duree\_gratuite\_min} premières minutes sont gratuites ; au-delà, les tranches s'appliquent dans l'ordre de leur rang, la dernière se répétant tant que le trajet continue (toute tranche commencée est due) ; le supplément électrique s'ajoute pour un vélo électrique. Par exemple, avec 30~minutes gratuites et deux tranches de 30~minutes à 1~€ puis 2~€, un trajet de 100~minutes coûte $1 + 2 \times \lceil 40/30 \rceil = 5$~€.
+
+\subsubsection*{Emprunt et restitution}
+
+L'emprunt (\texttt{sp\_emprunter\_velo}) et la restitution (\texttt{sp\_rendre\_velo}) sont les deux opérations exposées à la concurrence : deux usagers peuvent viser le même vélo ou la même borne au même instant. Chacune s'exécute dans une transaction unique et verrouille les lignes qu'elle lit avant de les modifier (\texttt{SELECT \ldots{} FOR UPDATE}) ; la seconde demande attend la fin de la première, puis constate que le vélo n'est plus disponible.
+
+\begin{enumerate}
+	\item \textbf{Emprunt} : recherche et verrouillage de l'abonnement valide de l'usager, puis du vélo ; contrôle de son état (inconnu, défectueux, déjà en location ou en atelier), de sa présence sur une borne, et de l'état de la borne et de la station ; insertion de la location, puis passage du vélo à l'état \og en location \fg{}, sans borne. Les déclencheurs historisent le départ et revérifient les règles d'emprunt.
+	\item \textbf{Restitution} : verrouillage de la location en cours de l'usager et de la borne d'arrivée ; contrôle que la borne fonctionne, que la station est en service et qu'aucun vélo n'y est déjà posé ; enregistrement de la date de restitution, qui déclenche le calcul de la durée (colonne générée) et du coût (déclencheur) ; le vélo est reposé sur la borne, à l'état \og disponible \fg{}, ou \og défectueux \fg{} si un signalement est encore ouvert à son sujet.
+\end{enumerate}
+
+Toute anomalie lève une erreur \texttt{SIGNAL SQLSTATE '45000'} accompagnée d'un message métier (\og Vélo signalé défectueux : emprunt impossible \fg{}, \og Cette borne est déjà occupée \fg{}\ldots). Un gestionnaire \texttt{EXIT HANDLER FOR SQLEXCEPTION} annule alors la transaction (\texttt{ROLLBACK}) et propage l'erreur (\texttt{RESIGNAL}) ; l'application affiche ce message tel quel. Aucune opération ne peut ainsi laisser un vélo à moitié emprunté.
+
+\subsection{Événements planifiés}
+
+Trois événements automatisent les traitements périodiques :
+\begin{itemize}
+	\item \texttt{ev\_releve\_stations}, toutes les 15~minutes : relevé de l'occupation des stations, qui alimente la statistique de remplissage ;
+	\item \texttt{ev\_expirer\_abonnements}, toutes les heures : renouvellement automatique ou expiration des abonnements échus ;
+	\item \texttt{ev\_facturer\_locations}, chaque nuit à 2~h : facturation des trajets payants.
+\end{itemize}
+Ils nécessitent l'activation de l'ordonnanceur (\texttt{event\_scheduler=ON} dans la configuration du serveur).
+
+\subsection{Sécurité}
+
+\begin{itemize}
+	\item l'application se connecte avec un compte dédié, \texttt{velo\_app}, qui n'a que \texttt{SELECT} et \texttt{EXECUTE} sur la base, plus des droits d'écriture ciblés : insertion, modification et suppression sur \texttt{station} et \texttt{borne} ; modification de certaines \emph{colonnes} seulement de \texttt{utilisateur}, \texttt{usager} et \texttt{signalement} ;
+	\item mots de passe hachés avec bcrypt, régénération de la session à la connexion, limitation des tentatives ;
+	\item jeton CSRF sur chaque formulaire, requêtes préparées uniquement, échappement automatique des gabarits, en-têtes HTTP de sécurité.
+\end{itemize}

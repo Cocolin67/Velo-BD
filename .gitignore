@@ -6,3 +6,9 @@
 /vendor/
 /var/
 .env
+# PDF temporaires des diagrammes (generes par docs/report/compiler.ps1)
+docs/diagrams/*.pdf
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
