@@ -26,22 +26,21 @@ Sur la base complète, l'onglet \og Trajets \fg{}, affiché par défaut, ne rép
 
 Le paramètre \texttt{innodb\_buffer\_pool\_size}, mémoire qu'InnoDB consacre au cache des données et des index, valait 16~Mo, valeur par défaut de XAMPP, pour une base de près de 5~Go : presque chaque page lue l'était sur le disque. Il a été porté à 4~Go (et \texttt{innodb\_log\_file\_size} à 512~Mo, environ un quart du cache). La figure~\ref{fig:pool} compare les procédures dont la version n'a pas changé entre les deux mesures.
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \begin{tikzpicture}
 	\begin{axis}[
-		ybar, bar width=9pt, width=0.95\linewidth, height=6cm,
-		ymin=0, ylabel={Temps (s)},
-		symbolic x coords={Trajets,Pointe,OD,Remplissage,Recettes,Regulation},
-		xtick=data,
-		xticklabels={Trajets par période, Heures de pointe, Origine-destination, Remplissage, Recettes, Régulation},
-		x tick label style={font=\footnotesize, align=center, text width=2cm},
-		legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize},
-		nodes near coords, every node near coord/.append style={font=\tiny},
-		enlarge x limits=0.1,
+		xbar, bar width=7pt, width=0.8\linewidth, height=8.5cm,
+		xmin=0, xmax=10.5, xlabel={Temps d'exécution (s)},
+		symbolic y coords={Trajets,Pointe,OD,Remplissage,Recettes,Regulation},
+		ytick=data, y dir=reverse, enlarge y limits=0.12,
+		yticklabels={Trajets par période, Heures de pointe, Origine-destination, Remplissage, Recettes, Régulation},
+		y tick label style={align=right, text width=2.8cm},
+		xmajorgrids, grid style={gray!20},
+		etiquette x, legende dessus,
 	]
-		\addplot[fill=avant, draw=avant] table[x=requete, y=pool16_s, col sep=comma]{data/buffer_pool.csv};
-		\addplot[fill=apres, draw=apres] table[x=requete, y=pool4096_s, col sep=comma]{data/buffer_pool.csv};
-		\legend{Buffer pool 16 Mo, Buffer pool 4 Go}
+		\addplot[fill=avant, draw=avant] table[y=requete, x=pool16_s, col sep=comma]{data/buffer_pool.csv};
+		\addplot[fill=apres, draw=apres] table[y=requete, x=pool4096_s, col sep=comma]{data/buffer_pool.csv};
+		\legend{Cache InnoDB de 16 Mo, Cache InnoDB de 4 Go}
 	\end{axis}
 \end{tikzpicture}
 \caption{Effet du cache InnoDB (période de 30 jours, mêmes versions des procédures)}\label{fig:pool}
@@ -53,19 +52,20 @@ Le gain est le plus fort pour les requêtes qui relisent beaucoup de lignes par 
 
 La figure~\ref{fig:optimisations} résume les gains obtenus par réécriture, chaque fois à configuration identique.
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \begin{tikzpicture}
 	\begin{axis}[
-		xbar, bar width=8pt, width=0.85\linewidth, height=5.5cm,
-		xmode=log, log basis x=10, xmin=0.3, xmax=200,
-		xlabel={Temps (s, échelle logarithmique)},
-		symbolic y coords={Remplissage,Flotte,OD},
-		ytick=data,
-		yticklabels={Remplissage des stations, Indisponibilité de la flotte, Origine-destination},
-		y tick label style={font=\footnotesize, align=right, text width=3.2cm},
-		legend style={at={(0.98,0.02)}, anchor=south east, font=\footnotesize},
-		nodes near coords, every node near coord/.append style={font=\tiny},
-		enlarge y limits=0.3,
+		xbar, bar width=8pt, width=0.8\linewidth, height=6cm,
+		xmode=log, log basis x=10, log origin=infty, xmin=0.2, xmax=400,
+		log ticks with fixed point,
+		xtick={0.2,1,5,10,60,400}, xticklabels={{0,2},1,5,10,60,400},
+		xlabel={Temps d'exécution (s, échelle logarithmique)},
+		symbolic y coords={OD,Flotte,Remplissage},
+		ytick=data, y dir=reverse, enlarge y limits=0.3,
+		yticklabels={Origine-destination, Indisponibilité de la flotte, Remplissage des stations},
+		y tick label style={align=right, text width=3cm},
+		xmajorgrids, grid style={gray!20},
+		etiquette x, legende dessus,
 	]
 		\addplot[fill=avant, draw=avant] table[y=requete, x=avant_s, col sep=comma]{data/optimisations.csv};
 		\addplot[fill=apres, draw=apres] table[y=requete, x=apres_s, col sep=comma]{data/optimisations.csv};
@@ -123,20 +123,25 @@ Or seuls les intervalles d'indisponibilité comptent au numérateur : il n'y a q
 
 Un dernier écueil est apparu : dans une sous-requête corrélée, MariaDB n'optimise pas \texttt{MIN(date\_heure)} en une simple lecture de la première entrée d'index, et parcourait les quelque 1\,600 entrées de chaque vélo (10~millions au total, 4,9~s). L'écriture équivalente \texttt{ORDER BY date\_heure LIMIT 1} ne lit qu'une entrée.
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \begin{tikzpicture}
 	\begin{axis}[
-		width=0.75\linewidth, height=6cm,
-		xmode=log, ymode=log, log basis x=10,
-		xlabel={Longueur de la période (jours)}, ylabel={Temps (s)},
+		width=0.75\linewidth, height=6.5cm,
+		xmode=log, ymode=log, log ticks with fixed point,
+		xmin=6, xmax=500, ymin=0.1, ymax=2000,
+		xlabel={Longueur de la période (jours)}, ylabel={Temps d'exécution (s)},
 		xtick={8,30,365}, xticklabels={8,30,365},
-		legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize},
+		ytick={0.1,1,10,100,1000}, yticklabels={{0,1},1,10,100,1\,000},
 		grid=major, grid style={gray!20},
-		nodes near coords, every node near coord/.append style={font=\tiny, anchor=south east},
+		legende dessus, legend columns=1,
 	]
-		\addplot[mark=*, color=avant, thick] table[x=jours, y=avant_s, col sep=comma]{data/flotte_periodes.csv};
-		\addplot[mark=square*, color=apres, thick] table[x=jours, y=apres_s, col sep=comma]{data/flotte_periodes.csv};
-		\legend{Avant (fonction de fenêtre), Après (intervalles d'indisponibilité)}
+		\addplot[mark=*, color=avant, thick, etiquette y,
+			every node near coord/.append style={anchor=south east, text=avant}]
+			table[x=jours, y=avant_s, col sep=comma]{data/flotte_periodes.csv};
+		\addplot[mark=square*, color=apres, thick, etiquette y,
+			every node near coord/.append style={anchor=north west, text=apres}]
+			table[x=jours, y=apres_s, col sep=comma]{data/flotte_periodes.csv};
+		\legend{Avant : fonction de fenêtre sur tous les changements d'état, Après : intervalles d'indisponibilité seulement}
 	\end{axis}
 \end{tikzpicture}
 \caption{Indisponibilité de la flotte selon la longueur de la période (cache de 4~Go)}\label{fig:flotte}
@@ -163,7 +168,7 @@ La base existante a été mise à jour par une migration ré-exécutable, sans l
 
 Le tableau~\ref{tab:resultats30} donne le temps de chaque procédure sur la période de référence, après toutes les corrections.
 
-\begin{table}[H]\centering
+\begin{table}[htbp]\centering
 	\pgfplotstabletypeset[
 		row predicate/.code={%
 			\pgfplotstablegetelem{#1}{jours}\of{\resultats}%
@@ -193,7 +198,7 @@ Les écarts avec les temps cités plus haut (origine-destination : 1,2~s lors de
 
 Chaque onglet de la page n'exécute que ses propres procédures, plus les indicateurs clés (trajets par période et heures de pointe) affichés en tête de chaque onglet. En additionnant les médianes, on obtient le temps de calcul de chaque onglet (tableau~\ref{tab:onglets}).
 
-\begin{table}[H]\centering
+\begin{table}[htbp]\centering
 	\begin{tabular}{lp{7.2cm}rrr}
 		\toprule
 		Onglet & Procédures appelées & 30~j & 90~j & 365~j \\
@@ -212,32 +217,38 @@ Sur la période de référence de 30~jours, les trois onglets respectent l'objec
 
 La figure~\ref{fig:echelle} montre l'évolution du temps de chaque statistique avec la longueur de la période.
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \begin{tikzpicture}
 	\begin{axis}[
-		width=0.9\linewidth, height=7.5cm,
-		xmode=log, ymode=log, log basis x=10,
-		xlabel={Longueur de la période (jours)}, ylabel={Temps médian (s)},
+		width=0.85\linewidth, height=8cm,
+		xmode=log, ymode=log, log ticks with fixed point,
+		xmin=6, xmax=420, ymin=0.03, ymax=30,
+		xlabel={Longueur de la période (jours)}, ylabel={Temps médian d'exécution (s)},
 		xtick={7,30,90,365}, xticklabels={7,30,90,365},
-		legend style={at={(1.02,1)}, anchor=north west, font=\footnotesize},
-		legend cell align=left,
+		ytick={0.05,0.1,0.5,1,5,10}, yticklabels={{0,05},{0,1},{0,5},1,5,10},
 		grid=major, grid style={gray!20},
-		cycle list name=exotic,
-		every axis plot/.append style={thick, mark size=1.5pt},
+		legende dessus, legend columns=3, legend cell align=left,
+		every axis plot/.append style={thick, mark size=1.8pt},
+		cycle list={
+			{avant, mark=*}, {apres, mark=square*}, {neutre, mark=triangle*},
+			{blue!65!black, mark=diamond*}, {orange!85!black, mark=pentagon*},
+			{violet, mark=otimes*}},
 	]
-		\addplot+[garder si={procedure}{sp_stat_trajets_par_periode}]    table[x=jours, y=mediane_s]{\resultats};
+		% data/echelle.csv : une colonne par procédure (temps médians de procedures.csv)
+		\addplot table[x=jours, y=trajets, col sep=comma]{data/echelle.csv};
 		\addlegendentry{Trajets par période}
-		\addplot+[garder si={procedure}{sp_stat_heures_pointe}]          table[x=jours, y=mediane_s]{\resultats};
+		\addplot table[x=jours, y=pointe, col sep=comma]{data/echelle.csv};
 		\addlegendentry{Heures de pointe}
-		\addplot+[garder si={procedure}{sp_stat_trajets_od}]             table[x=jours, y=mediane_s]{\resultats};
+		\addplot table[x=jours, y=od, col sep=comma]{data/echelle.csv};
 		\addlegendentry{Origine-destination}
-		\addplot+[garder si={procedure}{sp_stat_remplissage_stations}]   table[x=jours, y=mediane_s]{\resultats};
+		\addplot table[x=jours, y=remplissage, col sep=comma]{data/echelle.csv};
 		\addlegendentry{Remplissage}
-		\addplot+[garder si={procedure}{sp_stat_recettes_par_formule}]   table[x=jours, y=mediane_s]{\resultats};
+		\addplot table[x=jours, y=recettes, col sep=comma]{data/echelle.csv};
 		\addlegendentry{Recettes}
-		\addplot+[garder si={procedure}{sp_stat_indisponibilite_flotte}] table[x=jours, y=mediane_s]{\resultats};
+		\addplot table[x=jours, y=indisponibilite, col sep=comma]{data/echelle.csv};
 		\addlegendentry{Indisponibilité}
-		\draw[dashed, avant] (axis cs:5,5) -- (axis cs:500,5) node[pos=0.02, above, font=\tiny, anchor=south west] {objectif 5 s};
+		\addplot[dashed, red!70!black, thin, mark=none, domain=6:420, samples=2] {5};
+		\addlegendentry{Objectif de 5 s}
 	\end{axis}
 \end{tikzpicture}
 \caption{Temps médian de chaque statistique selon la longueur de la période}\label{fig:echelle}
@@ -247,15 +258,15 @@ Le temps croît à peu près linéairement avec le nombre de lignes de la pério
 
 \subsubsection{Temps d'affichage et cache applicatif}
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
 \begin{tikzpicture}
 	\begin{axis}[
-		ybar, bar width=14pt, width=0.6\linewidth, height=5.5cm,
-		ymin=0, ylabel={Temps de réponse (s)},
+		ybar, bar width=16pt, width=0.65\linewidth, height=6cm,
+		ymin=0, ymax=4.2, ylabel={Temps de réponse (s)},
 		symbolic x coords={Trajets,Stations,Recettes}, xtick=data,
-		legend style={at={(0.02,0.98)}, anchor=north west, font=\footnotesize},
-		nodes near coords, every node near coord/.append style={font=\tiny},
-		enlarge x limits=0.5,
+		ymajorgrids, grid style={gray!20},
+		enlarge x limits=0.25,
+		etiquette y, legende dessus,
 	]
 		\addplot[fill=avant, draw=avant] table[x=onglet, y=sans_cache_s, col sep=comma]{data/page_http.csv};
 		\addplot[fill=apres, draw=apres] table[x=onglet, y=avec_cache_s, col sep=comma]{data/page_http.csv};

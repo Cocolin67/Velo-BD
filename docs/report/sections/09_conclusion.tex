@@ -4,4 +4,19 @@ Le système réalisé couvre l'ensemble du cahier des charges : la base de donn�
 
 Le passage à un jeu de données réaliste de plusieurs gigaoctets a été l'étape la plus formatrice : il a révélé des requêtes correctes mais inexploitables à ce volume, et imposé une démarche rigoureuse de mesure, de lecture des plans d'exécution et de réécriture, en vérifiant à chaque fois que les résultats restaient identiques.
 
-\afaire{bilan personnel de l'équipe, limites (statistiques sur de longues périodes, maintenance et régulation partiellement exposées dans l'interface) et perspectives (tables d'agrégats, carte des stations, application mobile\ldots).}
+Pour l'équipe, ce projet a surtout montré l'intérêt de confier les règles métier à la base : une fois les contraintes, les déclencheurs et les procédures en place, l'application a pu être réécrite entièrement (du prototype PHP natif à Slim) sans jamais remettre en cause la cohérence des données. Il a aussi montré qu'une requête correcte sur quelques milliers de lignes peut devenir inutilisable sur plusieurs millions, et que seule la mesure permet de trouver où agir : la configuration du serveur, la forme des requêtes et les index ont chacun eu un effet propre.
+
+Le système garde des limites :
+\begin{itemize}
+	\item sans cache, les statistiques sur plus de trois mois dépassent l'objectif de 5~secondes (de 17 à 31~s sur un an) ;
+	\item la maintenance (interventions) et la régulation (tournées) sont complètes dans la base mais seulement en partie exposées dans l'interface : file des signalements et propositions de rééquilibrage ;
+	\item certaines simplifications du jeu de données (capacité des bornes non simulée dans le temps, tournées absentes de l'historique des positions) limitent le réalisme de quelques statistiques.
+\end{itemize}
+
+Plusieurs prolongements en découlent naturellement :
+\begin{itemize}
+	\item des \textbf{tables d'agrégats journaliers} alimentées chaque nuit par un événement planifié, pour des statistiques sur un an en quelques dixièmes de seconde ;
+	\item un \textbf{partitionnement par date} des tables d'historique et de locations ;
+	\item des écrans opérateur pour les interventions et les tournées, s'appuyant sur les procédures existantes ;
+	\item une \textbf{carte des stations} en temps réel, les coordonnées étant déjà stockées et indexées.
+\end{itemize}

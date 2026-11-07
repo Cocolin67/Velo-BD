@@ -18,4 +18,6 @@ L'application s'installe avec \texttt{composer install}, se configure dans \text
 php bin/bench-stats.php --repetitions=5 --periodes=7,30,90,365
 \end{lstlisting}
 
-Le script écrit \texttt{var/bench/procedures.csv} et \texttt{var/bench/contexte.csv}. Copiés dans \texttt{docs/report/data/}, ils mettent à jour automatiquement les tableaux~\ref{tab:volumes} et~\ref{tab:resultats30} ainsi que la figure~\ref{fig:echelle} à la compilation suivante.
+Le script écrit trois fichiers dans \texttt{var/bench/} : \texttt{procedures.csv} (une ligne par procédure et par période), \texttt{echelle.csv} (les mêmes temps médians, une colonne par procédure) et \texttt{contexte.csv} (serveur et volumes). Copiés dans \texttt{docs/report/data/}, ils mettent à jour automatiquement les tableaux~\ref{tab:volumes} et~\ref{tab:resultats30} ainsi que la figure~\ref{fig:echelle} à la compilation suivante. Les procédures mesurées doivent être celles de la branche \texttt{dev} : rechargez \texttt{procedures.sql} depuis cette branche avant la mesure.
+
+Le rapport se compile avec \texttt{docs/report/compiler.ps1}, qui convertit d'abord les diagrammes SVG en PDF.

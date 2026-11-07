@@ -17,12 +17,30 @@
 \usepackage{longtable}
 \usepackage{array}
 \usepackage{float}
+\usepackage[section]{placeins} % les flottants restent dans leur section
+\usepackage{rotating}        % diagramme entité-association en pleine page paysage
 \usepackage{caption}
+\captionsetup{font=small, labelfont=bf, skip=6pt}
+\usepackage{enumitem}        % espacement des listes
+\frenchsetup{StandardLists=true}
+\setlist{itemsep=0.2em, topsep=0.3em, parsep=0pt}
+\setlist[itemize]{label=--}
+\usepackage[eulergreek]{sansmath} % chiffres et formules dans la police du texte
 \usepackage{listings}        % extraits SQL / PHP
 \usepackage{pgfplots}        % graphiques générés depuis les CSV de docs/report/data
 \usepackage{pgfplotstable}
 \pgfplotsset{compat=1.18}
-\usetikzlibrary{babel}       % évite les conflits entre babel (french) et les options TikZ
+\usetikzlibrary{babel, arrows.meta, positioning, shapes.geometric}
+
+% Nombres à la française dans les graphiques et les tableaux : 2,5 et 4 993 545
+\pgfkeys{/pgf/number format/.cd, use comma, 1000 sep={\,}}
+
+% Placement des flottants : moins de pages à moitié vides
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\textfraction}{0.12}
+\renewcommand{\floatpagefraction}{0.75}
+\setlength{\emergencystretch}{2.5em} % évite les débordements des noms en \texttt
 \usepackage{svg}             % diagrammes SVG (Overleaf : Inkscape disponible ; sinon exporter en PDF)
 \usepackage[hidelinks]{hyperref}
 
@@ -41,26 +59,34 @@
 	         {«}{{\guillemotleft}}1 {»}{{\guillemotright}}1 {’}{{'}}1 {≈}{{$\approx$}}1
 }
 
-% Encadré « à compléter » pour les parties non rédigées
-\newcommand{\afaire}[1]{%
-	\par\noindent\fcolorbox{fondvert}{fondvert!15}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{%
-	\small\textbf{À rédiger :} #1}}\par\medskip}
-
-% Diagrammes de docs/diagrams : version PDF si elle existe, sinon le SVG
-\newcommand{\diagramme}[3][\linewidth]{%
-	\begin{figure}[H]\centering
-		\IfFileExists{../diagrams/#2.pdf}%
-			{\includegraphics[width=#1]{../diagrams/#2.pdf}}%
-			{\includesvg[width=#1]{../diagrams/#2}}
+% Diagrammes de docs/diagrams : version PDF si elle existe (compiler.ps1), sinon le SVG.
+% #1 : options de taille (largeur par défaut), #2 : nom du fichier, #3 : légende
+\newcommand{\imagediagramme}[2]{%
+	\IfFileExists{../diagrams/#2.pdf}%
+		{\includegraphics[#1]{../diagrams/#2.pdf}}%
+		{\includesvg[#1]{../diagrams/#2}}}
+\newcommand{\diagramme}[3][width=\linewidth]{%
+	\begin{figure}[htbp]\centering
+		\imagediagramme{#1}{#2}
 		\caption{#3}\label{fig:#2}
 	\end{figure}}
 
-% Filtre pgfplots : ne garder que les lignes dont la colonne #1 vaut #2
+% Styles communs des graphiques
 \pgfplotsset{
-	garder si/.style 2 args={
-		x filter/.append code={%
-			\edef\tempa{\thisrow{#1}}\edef\tempb{#2}%
-			\ifx\tempa\tempb\else\def\pgfmathresult{inf}\fi}},
+	% légende centrée au-dessus du graphique, sur une ligne
+	legende dessus/.style={legend style={at={(0.5,1.03)}, anchor=south,
+		legend columns=-1, draw=none, font=\footnotesize,
+		/tikz/every even column/.append style={column sep=1em}}},
+	% étiquette de valeur en secondes, lue dans la donnée brute (et non dans
+	% son logarithme quand l'axe est logarithmique)
+	etiquette x/.style={point meta=rawx, nodes near coords={%
+		\pgfmathprintnumber[fixed, precision=2]{\pgfplotspointmeta}},
+		every node near coord/.append style={font=\scriptsize, anchor=west}},
+	etiquette y/.style={point meta=rawy, nodes near coords={%
+		\pgfmathprintnumber[fixed, precision=2]{\pgfplotspointmeta}},
+		every node near coord/.append style={font=\scriptsize}},
+	every axis/.append style={tick label style={font=\footnotesize},
+		label style={font=\small}},
 }
 
 \geometry{margin=0pt}
@@ -205,7 +231,8 @@
 }
 
 \begin{document}
-	
+	\sansmath
+
 	\Couverture
 	
 	% ===== STRUCTURE DE LA PAGE 2 =====

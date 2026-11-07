@@ -11,7 +11,16 @@
 
 \diagramme{use_cases}{Diagramme de cas d'utilisation}
 
-\afaire{commenter le diagramme : regroupement des cas par acteur, relations \og include \fg{} / \og extend \fg{} éventuelles.}
+Le diagramme (figure~\ref{fig:use_cases}) organise les acteurs en hiérarchie : l'\textbf{utilisateur authentifié} est l'acteur générique (s'authentifier, signaler un problème) ; l'\textbf{usager} et l'\textbf{opérateur} en héritent, et l'\textbf{administrateur} est un opérateur doté de droits supplémentaires (comptes, description des stations). Dans l'application, un visiteur non connecté peut en outre consulter la disponibilité du réseau et s'inscrire.
+
+Les cas d'utilisation se regroupent en trois familles :
+\begin{itemize}
+	\item \textbf{usage du réseau} (usager) : s'abonner, gérer sa souscription, se désabonner, emprunter et rendre un vélo ;
+	\item \textbf{exploitation} (opérateur) : tournées de rééquilibrage, opérations de maintenance, consultation des statistiques ;
+	\item \textbf{administration} : gestion des comptes et description des stations.
+\end{itemize}
+
+Un acteur secondaire, le \textbf{système}, représente les traitements automatiques de la base. Les relations \og include \fg{} montrent qu'emprunter ou rendre un vélo déclenche toujours l'historisation de son état et de sa position, et que l'abonnement entraîne la facturation ; les relations \og extend \fg{} marquent les cas facultatifs, comme la gestion ou la résiliation d'une souscription existante. Ces inclusions correspondent directement aux déclencheurs et aux événements planifiés de la partie~\ref{sec:implementation}.
 
 \subsection{Règles métier}
 

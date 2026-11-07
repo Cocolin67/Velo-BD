@@ -2,15 +2,66 @@
 
 \subsection{Modèle conceptuel}
 
-\diagramme{entite_association}{Schéma entité-association}
+Le modèle entité-association (figure~\ref{fig:entite_association}, en notation de Chen) s'articule autour de quatre ensembles :
+\begin{itemize}
+	\item \textbf{le réseau} : une station possède des bornes, entité faible identifiée par son numéro au sein de la station ; les relevés de remplissage sont eux aussi rattachés à leur station ;
+	\item \textbf{la flotte} : un vélo est \emph{stationné} sur au plus une borne, et une borne accueille au plus un vélo (cardinalités 0,1 -- 0,1) ; ses changements d'état et de position sont conservés dans deux historiques ;
+	\item \textbf{la clientèle} : un usager souscrit des abonnements à une formule, dont le prix au trajet est décrit par des tranches tarifaires (entité faible de la formule) ; les factures sont émises par abonnement ;
+	\item \textbf{l'exploitation} : les signalements visent soit un vélo, soit une station ; une intervention d'un opérateur de maintenance retire un vélo du réseau ; une tournée de régulation, réalisée avec un véhicule, déplace des vélos d'une station à l'autre (lignes de tournée).
+\end{itemize}
 
-\afaire{présenter les entités principales et les associations porteuses de sens (location entre abonnement, vélo et bornes ; historiques ; tournée et lignes de tournée) ; justifier les cardinalités clés et la spécialisation des utilisateurs en usager / opérateur / administrateur.}
+La \textbf{location} est l'association centrale : elle relie un abonnement, un vélo, une borne de départ et, une fois le vélo rendu, une borne d'arrivée. Elle porte les dates d'emprunt et de restitution, d'où sont dérivés la durée et le coût. Rattacher la location à l'abonnement plutôt qu'à l'usager permet d'appliquer la tarification en vigueur au moment du trajet et de regrouper les trajets sur les factures de l'abonnement.
+
+Les utilisateurs sont modélisés par \textbf{spécialisation} : tout utilisateur (identité, email, mot de passe) est soit un usager, soit un opérateur, et un administrateur est un opérateur. Ce choix reflète directement les rôles de l'application : un administrateur dispose de tous les droits d'un opérateur.
+
+\begin{sidewaysfigure}
+	\centering
+	\imagediagramme{height=14.5cm}{entite_association}
+	\caption{Schéma entité-association (notation de Chen)}\label{fig:entite_association}
+\end{sidewaysfigure}
 
 \subsection{Modèle logique}
 
-\diagramme{logical_data_model}{Schéma relationnel}
+\begin{figure}[p]\centering
+	\imagediagramme{height=0.85\textheight}{logical_data_model}
+	\caption{Schéma relationnel (flèches : clés étrangères vers la table référencée)}\label{fig:logical_data_model}
+\end{figure}
 
-\afaire{expliquer le passage au relationnel (héritage par tables filles partageant la clé \texttt{id\_utilisateur}, tables d'association, clés composées comme \texttt{tranche\_tarifaire(id\_formule, rang)} et \texttt{releve\_station(id\_station, horodatage)}).}
+Le schéma relationnel compte vingt tables (figure~\ref{fig:logical_data_model}). En notation textuelle, la clé primaire est soulignée et les clés étrangères sont précédées de \#.
+
+{\small
+\begin{description}[itemsep=0.1em, font=\normalfont\bfseries]
+	\item[Utilisateur] (\underline{id\_utilisateur}, nom, prénom, email, mot\_de\_passe\_hash, date\_inscription)
+	\item[Usager] (\underline{\#id\_utilisateur}, date\_naissance, téléphone)
+	\item[Opérateur] (\underline{\#id\_utilisateur}, matricule, spécialité)
+	\item[Administrateur] (\underline{\#id\_utilisateur})
+	\item[Station] (\underline{id\_station}, nom, adresse, latitude, longitude, état\_station)
+	\item[Borne] (\underline{id\_borne}, \#id\_station, num\_borne, état\_borne)
+	\item[Relevé\_station] (\underline{\#id\_station, horodatage}, nb\_vélos\_mécaniques, nb\_vélos\_électriques, nb\_bornes\_libres)
+	\item[Vélo] (\underline{id\_vélo}, type\_vélo, date\_mise\_en\_service, état\_vélo, niveau\_batterie, \#id\_borne)
+	\item[Historique\_état] (\underline{id\_hist\_état}, \#id\_vélo, date\_heure, état\_vélo)
+	\item[Historique\_position] (\underline{id\_hist\_pos}, \#id\_vélo, \#id\_borne, date\_heure\_début, date\_heure\_fin, type\_position)
+	\item[Formule] (\underline{id\_formule}, libellé, prix, durée\_validité\_jours, durée\_gratuite\_min, supplément\_électrique)
+	\item[Tranche\_tarifaire] (\underline{\#id\_formule, rang}, durée\_tranche\_min, tarif\_tranche)
+	\item[Abonnement] (\underline{id\_abonnement}, date\_début, date\_fin, statut, renouvellement\_auto, \#id\_utilisateur, \#id\_formule)
+	\item[Location] (\underline{id\_location}, date\_heure\_emprunt, date\_heure\_restitution, durée\_min, coût, \#id\_abonnement, \#id\_vélo, \#id\_borne\_départ, \#id\_borne\_arrivée, \#id\_facture)
+	\item[Facture] (\underline{id\_facture}, date\_émission, montant\_total, statut\_paiement, \#id\_abonnement)
+	\item[Signalement] (\underline{id\_signalement}, date\_heure, description, statut, \#id\_utilisateur, \#id\_vélo, \#id\_station, \#id\_intervention)
+	\item[Intervention] (\underline{id\_intervention}, date\_retrait, date\_début\_réparation, date\_remise\_circulation, description\_travaux, \#id\_vélo, \#id\_opérateur)
+	\item[Tournée] (\underline{id\_tournée}, date\_heure\_début, date\_heure\_fin, \#id\_opérateur, \#id\_véhicule)
+	\item[Véhicule] (\underline{id\_véhicule}, immatriculation, capacité\_vélos)
+	\item[Ligne\_tournée] (\underline{\#id\_tournée, num\_ligne}, date\_heure\_déplacement, \#id\_vélo, \#id\_station\_départ, \#id\_station\_arrivée)
+\end{description}
+}
+
+Le passage du modèle conceptuel au modèle relationnel repose sur les choix suivants :
+\begin{itemize}
+	\item \textbf{héritage par tables liées} : \texttt{usager} et \texttt{operateur} ont pour clé primaire la clé étrangère \texttt{id\_utilisateur} ; \texttt{administrateur} référence \texttt{operateur}. Les attributs communs ne sont stockés qu'une fois, et chaque rôle n'a que ses propres colonnes ;
+	\item \textbf{identifiant technique pour la borne} : l'identifiant relatif du modèle conceptuel (station, numéro) devient une contrainte d'unicité \texttt{(id\_station, num\_borne)}, et la borne reçoit une clé \texttt{id\_borne} plus simple à référencer depuis les vélos, les locations et les historiques ;
+	\item \textbf{clés composées pour les entités faibles sans dépendants} : \texttt{tranche\_tarifaire(id\_formule, rang)}, \texttt{releve\_station(id\_station, horodatage)} et \texttt{ligne\_tournee(id\_tournee, num\_ligne)} ;
+	\item \textbf{associations 0,1} : \og stationner \fg{} devient la clé étrangère \emph{unique} \texttt{id\_borne} de \texttt{velo} ; la facturation d'un trajet devient la clé étrangère facultative \texttt{id\_facture} de \texttt{location} ;
+	\item la location référence ses \textbf{bornes} de départ et d'arrivée, et non les stations, qui s'en déduisent par jointure.
+\end{itemize}
 
 \subsection{Normalisation}
 
@@ -19,14 +70,44 @@ Le schéma respecte la troisième forme normale : chaque table décrit une seule
 \begin{itemize}
 	\item \texttt{location.duree\_min} est une \textbf{colonne générée} (\texttt{GENERATED ALWAYS AS \ldots{} STORED}) à partir des dates d'emprunt et de restitution : elle ne peut pas diverger de ces dates, et elle est indexable pour les statistiques ;
 	\item \texttt{location.cout} est calculé par déclencheur à la restitution et \textbf{figé} : il dépend de la tarification \emph{au moment du trajet}, qui peut évoluer ensuite ; le recalculer fausserait les factures passées ;
-	\item \texttt{location.velo\_en\_cours} et \texttt{abo\_en\_cours} sont des colonnes générées, non nulles seulement pendant une location : un index \texttt{UNIQUE} sur chacune garantit « au plus une location en cours » par vélo et par abonnement (MariaDB n'offre pas d'index unique partiel) ;
+	\item \texttt{location.velo\_en\_cours} et \texttt{abo\_en\_cours} sont des colonnes générées, non nulles seulement pendant une location : un index \texttt{UNIQUE} sur chacune garantit \og au plus une location en cours \fg{} par vélo et par abonnement (MariaDB n'offre pas d'index unique partiel) ;
 	\item \texttt{abonnement.statut} : la résiliation n'est pas déductible des dates, et l'état \og expiré \fg{} est matérialisé par un événement planifié pour permettre un accès indexé aux abonnements actifs.
 \end{itemize}
 
 \subsection{Contraintes d'intégrité}
 
-\afaire{détailler les contraintes : clés étrangères et leurs actions (\texttt{ON DELETE CASCADE} pour les bornes et relevés d'une station), \texttt{CHECK} (coordonnées, batterie réservée aux vélos électriques, position cohérente avec l'état), unicités (\texttt{uq\_velo\_borne} : une borne, un vélo).}
+Les règles exprimables de façon déclarative sont confiées au schéma, les autres aux déclencheurs (partie~\ref{sec:implementation}). Le tableau~\ref{tab:contraintes} en donne les principales.
+
+\begin{table}[htbp]\centering\small
+	\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{0.36\linewidth} X}
+		\toprule
+		\textbf{Contrainte} & \textbf{Règle garantie} \\
+		\midrule
+		\texttt{uq\_velo\_borne (id\_borne)} & une borne accueille au plus un vélo \\
+		\texttt{ck\_velo\_position} & un vélo en location ou en atelier n'est sur aucune borne : il ne peut être qu'à un seul endroit \\
+		\texttt{ck\_velo\_batterie\_electrique}, \texttt{ck\_velo\_batterie\_plage} & niveau de batterie réservé aux vélos électriques, entre 0 et 100 \\
+		\texttt{uq\_location\_velo\_en\_cours}, \texttt{uq\_location\_abo\_en\_cours} & au plus une location en cours par vélo et par abonnement \\
+		\texttt{ck\_loc\_dates}, \texttt{ck\_loc\_restitution} & la restitution suit l'emprunt ; une location est terminée si et seulement si sa borne d'arrivée est connue \\
+		\texttt{ck\_sig\_cible} & un signalement vise soit un vélo, soit une station, jamais les deux \\
+		\texttt{ck\_station\_latitude}, \texttt{ck\_station\_longitude} & coordonnées géographiques valides \\
+		\texttt{ck\_abo\_dates}, \texttt{ck\_hist\_pos\_dates}, \texttt{ck\_interv\_*}, \texttt{ck\_tournee\_dates} & cohérence chronologique des périodes \\
+		\texttt{ck\_formule\_*}, \texttt{ck\_tranche\_*}, \texttt{ck\_facture\_montant}, \texttt{ck\_loc\_cout} & montants et durées positifs \\
+		\texttt{ck\_ligne\_stations} & un déplacement de régulation change de station \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Principales contraintes déclaratives}\label{tab:contraintes}
+\end{table}
+
+Les clés étrangères sont en \texttt{ON DELETE RESTRICT} par défaut : supprimer une station, un vélo ou un abonnement qui a un historique est refusé, ce qui protège les données de facturation et les statistiques. La suppression en cascade est réservée aux lignes sans existence propre : rôles d'un utilisateur (\texttt{usager}, \texttt{operateur}, \texttt{administrateur}), relevés d'une station, tranches d'une formule et lignes d'une tournée. Une contrainte de MySQL a aussi guidé ces choix : une colonne utilisée dans un \texttt{CHECK} ne peut pas porter d'action \texttt{CASCADE} ou \texttt{SET NULL}.
 
 \subsection{Index}
 
-\afaire{présenter la stratégie d'indexation : index couvrant chaque clé étrangère, index orientés requêtes (recherche de l'abonnement valide, file des signalements, historiques par vélo et par date). Les index couvrants ajoutés pour les statistiques sont étudiés en partie~\ref{sec:performances}.}
+Chaque clé étrangère est couverte par un index, condition pour vérifier rapidement l'intégrité référentielle et réaliser les jointures. Ces index ont été composés de façon à servir aussi les requêtes de l'application :
+\begin{itemize}
+	\item \textbf{recherche de l'abonnement valide} d'un usager à l'emprunt : \texttt{(id\_utilisateur, statut, date\_fin)} sur \texttt{abonnement} ;
+	\item \textbf{historiques d'un vélo}, triés par date : \texttt{(id\_velo, date\_heure)} sur les historiques d'état et de position, les locations et les signalements ;
+	\item \textbf{file des signalements} par statut et par date : \texttt{(statut, date\_heure)} ;
+	\item \textbf{expiration des abonnements} par l'événement planifié : \texttt{(statut, date\_fin)} ;
+	\item \textbf{factures par période} : \texttt{(date\_emission)} et \texttt{(id\_abonnement, date\_emission)}.
+\end{itemize}
+L'ordre des colonnes suit la règle du préfixe gauche : la colonne filtrée par égalité vient en premier, la colonne triée ou filtrée par intervalle ensuite. Les index couvrants ajoutés pour les statistiques sont étudiés en partie~\ref{sec:performances}.

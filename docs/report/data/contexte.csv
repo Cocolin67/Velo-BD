@@ -1,5 +1,6 @@
 cle,valeur
-date_mesure,"2026-11-07 12:29"
+date_mesure,2026-11-07
+heure_mesure,13h29
 fin_periode,2026-11-07
 repetitions,5
 serveur,10.4.32-MariaDB

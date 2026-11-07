@@ -18,7 +18,14 @@ Le sujet insiste sur deux points, qui ont guidé nos choix :
 	\item \textbf{Gestion de projet} : dépôt Git commun, une branche de développement (\texttt{dev}), une branche de documentation (\texttt{docs}) et des branches de fonctionnalités.
 \end{itemize}
 
-\afaire{répartition du travail entre les membres de l'équipe et méthode de travail (réunions, outils de suivi).}
+Le travail a été réparti par domaine, chaque membre prenant en charge une partie du livrable :
+\begin{itemize}
+	\item \textbf{Colin Aubert} : premier prototype de l'interface (pages de base, navigation, transitions entre pages, thème sombre) ;
+	\item \textbf{Alban Gratia} : diagramme entité-association et première optimisation de la page de statistiques (découpage en onglets, pagination, cache applicatif) ;
+	\item \textbf{Antoine Prévost} : modèles de données, scripts SQL (schéma, déclencheurs, procédures, génération des données), application Slim et analyse des performances sur la base complète.
+\end{itemize}
+
+Chaque évolution est développée sur une branche dédiée puis reportée sur \texttt{dev} ; le rapport et les diagrammes vivent sur la branche \texttt{docs}. Les scripts SQL étant versionnés et ré-exécutables, chacun peut reconstruire une base identique sur son poste à partir du dépôt.
 
 \subsection{Couverture du cahier des charges}
 

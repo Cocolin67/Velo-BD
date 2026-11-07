@@ -11,11 +11,68 @@ L'application suit une architecture en couches autour du micro-framework Slim~4 
 	\item \texttt{templates/} : gabarits Twig (mise en page Tailwind, composants réutilisables).
 \end{itemize}
 
-\afaire{schéma du cheminement d'une requête (route, middleware de rôle, contrôleur, repository, procédure stockée, gabarit).}
+La figure~\ref{fig:requete} suit une requête, par exemple l'emprunt d'un vélo. Les middlewares s'appliquent à toutes les routes ; le contrôle de rôle (\texttt{RequireRole}) est attaché à chaque groupe de routes : visiteur, utilisateur connecté, usager, opérateur, administrateur. Le contrôleur ne contient aucune requête SQL : il valide les paramètres, appelle le repository, qui exécute une requête préparée ou une procédure stockée, puis transmet le résultat au gabarit. Une erreur levée par la base (\texttt{SIGNAL}) remonte jusqu'au contrôleur, qui l'affiche comme message à l'utilisateur.
+
+\begin{figure}[htbp]\centering
+\begin{tikzpicture}[
+	font=\footnotesize,
+	etape/.style={draw=neutre, rounded corners=2pt, fill=neutre!6, align=center,
+		minimum height=11mm, text width=27mm, inner sep=3pt},
+	base/.style={etape, fill=fondvert!35, draw=fondvert!80!black},
+	code/.style={font=\scriptsize\ttfamily},
+	fleche/.style={-{Stealth[length=2mm]}, thick, neutre},
+	node distance=7mm and 6mm,
+]
+	\node[etape] (nav) {Navigateur\\{\scriptsize\ttfamily POST}\\{\scriptsize\ttfamily /trajets/emprunt}};
+	\node[etape, right=of nav] (mw) {Middlewares : erreurs, en-têtes, session, CSRF};
+	\node[etape, right=of mw] (route) {Routage et contrôle du rôle (usager)};
+	\node[etape, right=of route] (ctrl) {Contrôleur\\{\scriptsize\ttfamily RentalController}};
+	\node[etape, below=of ctrl] (repo) {Repository\\{\scriptsize\ttfamily RentalRepository}};
+	\node[base, below=of repo] (sp) {MariaDB\\{\scriptsize\ttfamily sp\_emprunter\_velo}\\+ déclencheurs};
+	\node[etape, below=of route] (twig) {Redirection et message (succès ou erreur)};
+	\node[etape, below=of nav] (rep) {Page affichée\\(gabarit Twig)};
+	\draw[fleche] (nav) -- (mw);
+	\draw[fleche] (mw) -- (route);
+	\draw[fleche] (route) -- (ctrl);
+	\draw[fleche] (ctrl) -- (repo);
+	\draw[fleche, {Stealth[length=2mm]}-{Stealth[length=2mm]}] (repo) -- node[right, font=\scriptsize, align=left] {appel / résultat\\ou \texttt{SIGNAL}} (sp);
+	\draw[fleche] (ctrl.south west) -- (twig.north east);
+	\draw[fleche] (twig) -- (rep);
+	\draw[fleche] (rep) -- (nav);
+\end{tikzpicture}
+\caption{Cheminement d'une requête dans l'application}\label{fig:requete}
+\end{figure}
 
 \subsection{Fonctionnalités par rôle}
 
-\afaire{une capture d'écran commentée par fonctionnalité exigée : inscription et connexion ; stations en temps réel et gestion par l'administrateur (ajout, modification, suppression, recherche, filtres) ; emprunt et restitution avec coût estimé, historique des trajets ; page de statistiques (onglets, graphiques, export CSV). Ajouter les fonctionnalités supplémentaires : abonnements et factures, signalements, flotte, tableaux de bord par rôle.}
+Le tableau~\ref{tab:fonctionnalites} récapitule les pages de l'application et, pour chacune, le traitement réalisé par la base. Les fonctionnalités exigées par le sujet (inscription et connexion, stations en temps réel, gestion des stations, emprunt et restitution, statistiques) sont complétées par la gestion des abonnements et des factures, les signalements, le suivi de la flotte et des tableaux de bord adaptés à chaque rôle.
+
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.16\linewidth} >{\raggedright\arraybackslash}p{0.38\linewidth} >{\raggedright\arraybackslash}p{0.36\linewidth}}
+	\caption{Fonctionnalités de l'application et traitements en base}\label{tab:fonctionnalites}\\
+	\toprule
+	\textbf{Rôle} & \textbf{Fonctionnalité} & \textbf{Traitement en base} \\
+	\midrule\endfirsthead
+	\toprule
+	\textbf{Rôle} & \textbf{Fonctionnalité} & \textbf{Traitement en base} \\
+	\midrule\endhead
+	\bottomrule\endlastfoot
+	Visiteur & accueil avec la disponibilité du réseau ; inscription ; connexion (tentatives limitées) & vue \texttt{v\_stations\_occupation} ; \texttt{sp\_inscrire\_usager}, \texttt{sp\_authentifier} ; mot de passe bcrypt vérifié par PHP \\
+	\midrule
+	Usager & stations en temps réel (recherche, filtres) & vue \texttt{v\_stations\_occupation} \\
+	& souscription, renouvellement et résiliation d'un abonnement ; factures & \texttt{sp\_souscrire\_abonnement}, \texttt{sp\_renouveler\_abonnement}, \texttt{sp\_resilier\_abonnement} \\
+	& emprunt et restitution d'un vélo, avec le coût estimé en direct pendant le trajet & \texttt{sp\_emprunter\_velo}, \texttt{sp\_rendre\_velo} ; estimation par \texttt{fn\_calculer\_cout} \\
+	& historique des trajets ; signalement d'un problème ; profil & \texttt{sp\_signaler\_probleme} ; droits limités à certaines colonnes \\
+	\midrule
+	Opérateur & tableau de bord d'exploitation ; toutes les locations (filtres par date, statut, station, type, usager) & index \texttt{(id\_velo, date\_heure\_emprunt)}, \texttt{(id\_abonnement, date\_heure\_emprunt)} \\
+	& flotte : filtres, fiche d'un vélo avec ses historiques d'état et de position & tables \texttt{historique\_etat}, \texttt{historique\_position} \\
+	& file des signalements : prise en charge, clôture & index \texttt{(statut, date\_heure)} \\
+	& statistiques à onglets, graphiques, export CSV ; propositions de rééquilibrage & six procédures \texttt{sp\_stat\_*} ; \texttt{sp\_stations\_a\_reequilibrer}, \texttt{sp\_proposer\_deplacements} \\
+	\midrule
+	Administrateur & stations : création, modification, ajout et mise hors service de bornes, suppression & droits d'écriture de \texttt{velo\_app} limités à \texttt{station} et \texttt{borne} \\
+	& comptes : recherche, création d'opérateurs & héritage \texttt{utilisateur} / \texttt{operateur} / \texttt{administrateur} \\
+\end{longtable}
+}
 
 \subsection{Page de statistiques}
 
