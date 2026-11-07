@@ -164,7 +164,7 @@ La page *Statistiques* est découpée en onglets (seules les procédures de l’
 php bin/bench-stats.php --repetitions=5 --periodes=7,30,90,365
 ```
 
-Le script appelle chaque procédure `sp_stat_*` directement (sans le cache de l’application) pour plusieurs longueurs de période et écrit dans `var/bench/` deux fichiers CSV : `procedures.csv` (premier appel, médiane, min, max, nombre de lignes) et `contexte.csv` (version du serveur, taille du buffer pool, volumes des tables). Ces fichiers alimentent les graphiques du rapport.
+Le script appelle chaque procédure `sp_stat_*` directement (sans le cache de l’application) pour plusieurs longueurs de période et écrit dans `var/bench/` trois fichiers CSV : `procedures.csv` (premier appel, médiane, min, max, nombre de lignes), `echelle.csv` (temps médians, une colonne par statistique) et `contexte.csv` (date et heure locales, version du serveur, taille du buffer pool, volumes des tables). Ces fichiers alimentent les graphiques du rapport (`docs/report/data/`). Rechargez `procedures.sql` depuis cette branche avant de mesurer.
 
 ## Documentation du projet
 
