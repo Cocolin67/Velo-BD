@@ -8,13 +8,59 @@ Toutes les lignes sont produites par des requêtes ensemblistes (\texttt{INSERT 
 
 \subsection{Réalisme des données}
 
-Pour que les statistiques et les mesures de performances aient un sens, les données reproduisent les régularités d'un vrai réseau sur une année d'historique :
+Des données tirées uniformément au hasard donneraient des statistiques plates (autant de trajets à 3~h qu'à 18~h, toutes les stations également remplies) et des mesures de performances peu représentatives. Le générateur reproduit donc les régularités d'un vrai réseau sur une année d'historique. Il ne dispose que de \texttt{RAND()}, qui renvoie un nombre $U$ uniforme entre 0 et 1 ; chaque comportement ci-dessous est obtenu en transformant un ou plusieurs de ces tirages (notés $U_1, U_2, \ldots$, indépendants).
+
+\paragraph{Tirer une valeur « en cloche ».} Les heures de pointe suivent une loi normale, que MySQL ne fournit pas. On l'obtient par la transformation de Box-Muller, qui combine deux tirages uniformes :
+\[
+	G = \sqrt{-2\ln(1-U_1)}\,\cos(2\pi U_2).
+\]
+$G$ suit une loi normale centrée réduite : il vaut le plus souvent entre $-1$ et $1$, et rarement plus de 2 en valeur absolue. Pour obtenir une valeur centrée sur $\mu$ avec un écart type $\sigma$, il suffit de calculer $\mu + \sigma G$.
+
+\paragraph{Heure de départ (heures de pointe).} L'heure de départ $h$, en minutes depuis minuit, est tirée dans l'un de quatre profils, choisi par un tirage $U_3$ :
+\[
+	h = \begin{cases}
+		495 + 55\,G  & \text{si } U_3 < 0{,}27 \quad \text{(27~\% : pointe du matin, 8~h~15 $\pm$ 55~min)} \\
+		1065 + 70\,G & \text{si } 0{,}27 \le U_3 < 0{,}57 \quad \text{(30~\% : pointe du soir, 17~h~45 $\pm$ 70~min)} \\
+		735 + 50\,G  & \text{si } 0{,}57 \le U_3 < 0{,}70 \quad \text{(13~\% : pause de midi, 12~h~15 $\pm$ 50~min)} \\
+		360 + 1000\,U_4 & \text{sinon} \quad \text{(30~\% : uniformément entre 6~h et 22~h~40)}
+	\end{cases}
+\]
+puis ramenée dans la journée ($0 \le h \le 1439$). L'histogramme des départs par heure présente ainsi deux pics marqués, un plus petit à midi et un fond d'activité diurne.
+
+\paragraph{Saisonnalité.} On tire d'abord deux fois plus de trajets candidats que nécessaire, à des jours uniformes sur l'année, puis on en élimine une partie :
 \begin{itemize}
-	\item \textbf{heures de pointe} : 27~\% des trajets sont tirés autour de 8~h~15, 30~\% autour de 17~h~45 et 13~\% autour de midi (lois normales), le reste uniformément entre 6~h et 23~h ;
-	\item \textbf{saisonnalité} : environ un tiers de trajets en moins le week-end et pendant les mois d'hiver ;
-	\item \textbf{durées} : la plupart des trajets durent quelques minutes à une demi-heure (loi exponentielle de moyenne 14~min au-delà de 3~min), 3~\% sont de longues locations d'une à onze heures, ce qui fait apparaître des coûts au-delà de la durée gratuite ;
-	\item \textbf{géographie} : les stations sont réparties sur une zone d'environ 13~$\times$~15~km ; 70~\% des arrivées sont attirées vers les stations du centre, ce qui crée des stations saturées et des stations vides, et donc un besoin de régulation ;
-	\item \textbf{continuité des vélos} : chaque vélo suit une chaîne de trajets sans chevauchement, chaque trajet partant de la borne où le précédent s'est terminé ;
+	\item un trajet tombant un samedi ou un dimanche est supprimé avec une probabilité de 35~\% ;
+	\item un trajet tombant en décembre, janvier ou février est supprimé avec une probabilité de 35~\%, indépendamment.
+\end{itemize}
+Un jour de semaine hors hiver garde donc tous ses trajets, un week-end ou un jour d'hiver en garde 65~\%, et un week-end d'hiver $0{,}65^2 \approx 42$~\%.
+
+\paragraph{Durée des trajets.} La durée $d$, en minutes, est tirée par la méthode d'inversion : appliquer $-\ln(1-U)$ à un tirage uniforme donne une loi exponentielle de moyenne 1, où les valeurs courtes sont fréquentes et les longues de plus en plus rares. Avec un tirage $U_5$ :
+\[
+	d = \begin{cases}
+		60 + 600\,\dfrac{U_5}{0{,}03} & \text{si } U_5 < 0{,}03 \quad \text{(3~\% : longue location, de 1~h à 11~h)} \\[1ex]
+		3 - 14\,\ln(1 - 0{,}999\,U_5) & \text{sinon} \quad \text{(97~\% : trajet courant)}
+	\end{cases}
+\]
+plafonnée à 12~h. Un trajet courant dure entre 3~minutes et 1~h~40 (le facteur $0{,}999$ évite $\ln 0$ et fixe ce maximum), 17~minutes en moyenne, et la plupart durent moins d'une demi-heure ; les longues locations dépassent la durée gratuite et produisent des coûts.
+
+\paragraph{Géographie et attraction du centre.} Les stations sont placées uniformément dans un rectangle de $0{,}12^\circ$ de latitude sur $0{,}20^\circ$ de longitude, soit environ $13 \times 15$~km. Elles sont classées selon leur distance au centre $(48{,}86 ; 2{,}35)$ :
+\[
+	D = \sqrt{(\text{lat} - 48{,}86)^2 + \bigl(0{,}66\,(\text{lon} - 2{,}35)\bigr)^2},
+\]
+où le facteur $0{,}66 \approx \cos 48{,}86^\circ$ corrige le fait qu'à cette latitude, un degré de longitude est plus court qu'un degré de latitude. Les $N$ bornes reçoivent un rang $r$ de 1 (la plus centrale) à $N$ (la plus excentrée). La borne d'arrivée d'un trajet est le rang
+\[
+	r = 1 + \lfloor N\,X \rfloor \quad\text{avec}\quad
+	X = \begin{cases}
+		U_6^{\,1{,}6} & \text{dans 70~\% des cas} \\
+		U_6 & \text{dans 30~\% des cas.}
+	\end{cases}
+\]
+Élever $U_6$ à la puissance $1{,}6$ rapproche les valeurs de 0 (par exemple $0{,}5^{1{,}6} \approx 0{,}33$), donc favorise les petits rangs, c'est-à-dire le centre. Concrètement, les 10~\% de bornes les plus centrales reçoivent $0{,}7 \times 0{,}1^{1/1{,}6} + 0{,}3 \times 0{,}1 \approx 20$~\% des arrivées, deux fois leur part. Les vélos s'accumulent au centre et se raréfient en périphérie : des stations saturées et d'autres vides apparaissent, ce qui justifie les tournées de régulation.
+
+\paragraph{Autres règles.}
+\begin{itemize}
+	\item \textbf{volume par vélo} : chaque vélo reçoit un quota de trajets égal à la moyenne visée multipliée par $0{,}6 + 0{,}8\,U$, soit entre 60~\% et 140~\% de la moyenne : certains vélos roulent beaucoup plus que d'autres ;
+	\item \textbf{continuité des vélos} : parmi les candidats restants d'un vélo, ceux qui commencent moins de 2~minutes après la fin du trajet précédent sont éliminés, puis le quota est prélevé au hasard. Chaque vélo suit ainsi une chaîne de trajets sans chevauchement, chaque trajet partant de la borne où le précédent s'est terminé ;
 	\item \textbf{clientèle} : 45~\% d'abonnés annuels, 10~\% au tarif réduit, 30~\% d'abonnés mensuels (abonnements de 30~jours successifs) et 15~\% d'usagers occasionnels, à qui un ticket journée est créé et facturé pour chaque jour d'utilisation ;
 	\item \textbf{état courant} : environ 0,8~\% des vélos sont en location, 1,2~\% en atelier (intervention ouverte) et 2~\% signalés défectueux ; les signalements, interventions et historiques passés sont cohérents avec ces états.
 \end{itemize}

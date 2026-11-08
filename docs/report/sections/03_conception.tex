@@ -14,11 +14,12 @@ La \textbf{location} est l'association centrale : elle relie un abonnement, un v
 
 Les utilisateurs sont modélisés par \textbf{spécialisation} : tout utilisateur (identité, email, mot de passe) est soit un usager, soit un opérateur, et un administrateur est un opérateur. Ce choix reflète directement les rôles de l'application : un administrateur dispose de tous les droits d'un opérateur.
 
-\begin{sidewaysfigure}
+% Pleine largeur de la feuille (19 cm, au-delà des marges) pour garder le texte lisible
+\begin{figure}[!htbp]
 	\centering
-	\imagediagramme{height=14.5cm}{entite_association}
+	\makebox[\textwidth][c]{\imagediagramme{width=19cm}{entite_association}}
 	\caption{Schéma entité-association (notation de Chen)}\label{fig:entite_association}
-\end{sidewaysfigure}
+\end{figure}
 
 \subsection{Modèle logique}
 
