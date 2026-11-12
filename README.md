@@ -53,7 +53,7 @@ Les règles métier restent dans la base : l’application appelle les procédur
 Dans `my.ini` (XAMPP : `C:\xampp\mysql\bin\my.ini`, section `[mysqld]`), puis redémarrer le serveur :
 
 ```ini
-event_scheduler=ON              # événements planifiés : expiration des abonnements, facturation, relevés
+event_scheduler=ON              # événements planifiés : expiration des abonnements, facturation, relevés, simulation
 innodb_buffer_pool_size=4G      # XAMPP fournit 16M : la base complète (≈ 5 Go) serait relue sur disque à chaque requête
 innodb_log_file_size=512M       # ≈ 25 % du buffer pool
 ```
@@ -72,6 +72,7 @@ Exécuter les scripts dans cet ordre :
 4. [`database/seed.sql`](database/seed.sql), puis `CALL sp_seed_petit();` (ou `sp_seed_demo()`) : données factices
 5. [`database/app_user.sql`](database/app_user.sql) : compte applicatif `velo_app`. **Remplacez d’abord `CHANGER_CE_MOT_DE_PASSE`.**
 6. [`database/demo_accounts.sql`](database/demo_accounts.sql) : un compte de démonstration par rôle.
+7. *(facultatif)* [`database/simulation.sql`](database/simulation.sql) : activité continue du réseau (voir ci-dessous).
 
 ```bash
 mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/schema.sql
@@ -81,20 +82,40 @@ mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database
 mysql -h 127.0.0.1 -P 3307 -u root -p velo_libre_service -e "CALL sp_seed_petit();"
 mysql -h 127.0.0.1 -P 3307 -u root -p < database/app_user.sql
 mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/demo_accounts.sql
+mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/simulation.sql
 ```
 
 Sous PowerShell, remplacez `< fichier.sql` par `Get-Content fichier.sql -Raw | mysql ...`.
 
-### Mettre à jour une base existante (migrations)
+### Mettre à jour une base existante
 
-Une base déjà peuplée (plusieurs Go) ne doit pas être recréée : appliquez plutôt, dans l’ordre, les scripts de [`database/migrations/`](database/migrations/). Ils sont ré-exécutables et ne reconstruisent que ce qui a changé. Ré-exécutez ensuite `procedures.sql` (lui-même ré-exécutable) pour mettre à jour les procédures.
+Une base déjà peuplée (plusieurs Go) ne doit pas être recréée : ré-exécutez `procedures.sql`, qui est ré-exécutable. En plus des procédures, `procedures.sql` aligne les index modifiés depuis la création de la base sur `schema.sql` (section *Mise à niveau des index*) : un index n’est reconstruit que si sa définition diffère, et rien n’est fait sur une base créée avec le schéma actuel.
 
 ```bash
-mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/migrations/001_index_couvrants_stats.sql
 mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/procedures.sql
 ```
 
-La migration 001 reconstruit deux index sur `location` et `releve_station` : sur une grosse base, comptez plusieurs minutes. La table reste lisible et modifiable pendant l’opération.
+Sur une base créée avant les index couvrants des statistiques, deux index de `location` et `releve_station` sont reconstruits : comptez plusieurs minutes sur la base complète. Les tables restent lisibles et modifiables pendant l’opération (`ALGORITHM=INPLACE, LOCK=NONE`).
+
+### Faire vivre la base (simulation)
+
+Les données de `seed.sql` s’arrêtent au moment du chargement. `simulation.sql` installe des événements planifiés qui prolongent l’historique en temps réel, en appelant les mêmes procédures métier que l’application (les règles, triggers et événements existants s’appliquent donc) :
+
+| Événement | Fréquence | Activité simulée |
+|---|---|---|
+| `ev_sim_trajets` | 1 min | restitutions puis emprunts : pointes à 8 h et 18 h, trajets vers le centre le matin et vers la périphérie le soir, week-end plus calme |
+| `ev_sim_abonnements` | 1 h | inscriptions de nouveaux usagers (`@sim.velo.local`) et réabonnements |
+| `ev_sim_signalements` | 15 min | signalements de vélos (qui passent en « défectueux ») et de stations |
+| `ev_sim_maintenance` | 15 min | retrait des vélos défectueux, réparation, remise en circulation (7 h - 19 h) |
+| `ev_sim_regulation` | 1 h | tournées de rééquilibrage des stations pleines vers les plus vides (6 h - 22 h) |
+
+```sql
+CALL sp_sim_bilan(24);        -- activité des 24 dernières heures
+CALL sp_sim_activer(FALSE);   -- suspendre (par exemple avant bin/bench-stats.php)
+CALL sp_sim_activer(TRUE);    -- reprendre
+```
+
+Les intensités se règlent dans les appels des événements (fin du fichier). Par défaut, 1 % de la flotte est emprunté chaque minute à l’heure de pointe, pour une durée moyenne de 15 minutes. Les comptes de démonstration ne sont jamais utilisés. Après une période de simulation, le contrôle « rupture de chaîne pour un même vélo » de `sp_seed_verifier` compte aussi les vélos déplacés par une tournée ou reposés ailleurs après réparation : ces déplacements sont normaux, ce contrôle ne vaut que pour les données générées par `seed.sql`.
 
 ### 2. Configurer l’application
 
@@ -132,11 +153,10 @@ config/
 database/
 ├── schema.sql          # Schéma relationnel et contraintes
 ├── triggers.sql        # Triggers d’intégrité et d’historisation
-├── procedures.sql      # Vue, procédures métier et statistiques
+├── procedures.sql      # Vue, procédures métier et statistiques, mise à niveau des index
 ├── seed.sql            # Génération de données factices
 ├── app_user.sql        # Compte MySQL applicatif (moindre privilège)
 ├── demo_accounts.sql   # Comptes de démonstration
-└── migrations/         # Mises à jour ré-exécutables d’une base existante
 bin/
 ├── check-db.php        # Diagnostic de la connexion (composer check-db)
 └── bench-stats.php     # Banc de mesure des procédures statistiques
@@ -164,7 +184,7 @@ La page *Statistiques* est découpée en onglets (seules les procédures de l’
 php bin/bench-stats.php --repetitions=5 --periodes=7,30,90,365
 ```
 
-Le script appelle chaque procédure `sp_stat_*` directement (sans le cache de l’application) pour plusieurs longueurs de période et écrit dans `var/bench/` deux fichiers CSV : `procedures.csv` (premier appel, médiane, min, max, nombre de lignes) et `contexte.csv` (version du serveur, taille du buffer pool, volumes des tables). Ces fichiers alimentent les graphiques du rapport.
+Le script appelle chaque procédure `sp_stat_*` directement (sans le cache de l’application) pour plusieurs longueurs de période et écrit dans `var/bench/` trois fichiers CSV : `procedures.csv` (premier appel, médiane, min, max, nombre de lignes), `echelle.csv` (temps médians, une colonne par statistique) et `contexte.csv` (date et heure locales, version du serveur, taille du buffer pool, volumes des tables). Ces fichiers alimentent les graphiques du rapport (`docs/report/data/`). Rechargez `procedures.sql` depuis cette branche avant de mesurer.
 
 ## Documentation du projet
 

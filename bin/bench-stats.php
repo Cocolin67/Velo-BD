@@ -15,7 +15,10 @@ declare(strict_types=1);
  *
  * Fichiers produits (séparateur « , », lisibles par pgfplots) :
  *   - procedures.csv : procedure,jours,premier_s,mediane_s,min_s,max_s,lignes
- *   - contexte.csv   : cle,valeur (versions, configuration InnoDB, volumes)
+ *   - echelle.csv    : jours + une colonne de temps médian par statistique
+ *                      (même contenu que procedures.csv, une ligne par période)
+ *   - contexte.csv   : cle,valeur (versions, configuration InnoDB, volumes) ; le
+ *                      rapport lit les valeurs par numéro de ligne : garder l'ordre.
  */
 
 use Dotenv\Dotenv;
@@ -83,8 +86,12 @@ if (!is_dir($sortie) && !mkdir($sortie, 0775, true) && !is_dir($sortie)) {
 }
 
 // ---- Contexte de la mesure -------------------------------------------------
+// Heure locale (PHP en ligne de commande est en UTC par défaut), sans espace ni « : »
+// pour que la valeur reste lisible telle quelle par pgfplots et babel (français).
+$maintenant = new DateTimeImmutable('now', new DateTimeZone($env('APP_TIMEZONE', 'Europe/Paris')));
 $contexte = [
-    'date_mesure'             => date('Y-m-d H:i'),
+    'date_mesure'             => $maintenant->format('Y-m-d'),
+    'heure_mesure'            => $maintenant->format('H\hi'),
     'fin_periode'             => $fin->format('Y-m-d'),
     'repetitions'             => $repetitions,
     'serveur'                 => $pdo->query('SELECT VERSION()')->fetchColumn(),
@@ -105,6 +112,17 @@ foreach ($contexte as $k => $v) {
 fclose($f);
 
 // ---- Mesures ------------------------------------------------------------------
+/** Colonnes de echelle.csv : statistique => nom de colonne */
+$colonnesEchelle = [
+    'sp_stat_trajets_par_periode'    => 'trajets',
+    'sp_stat_heures_pointe'          => 'pointe',
+    'sp_stat_trajets_od'             => 'od',
+    'sp_stat_remplissage_stations'   => 'remplissage',
+    'sp_stat_recettes_par_formule'   => 'recettes',
+    'sp_stat_indisponibilite_flotte' => 'indisponibilite',
+];
+$echelle = [];   // [jours][colonne] => temps médian
+
 $f = fopen($sortie . '/procedures.csv', 'wb');
 fputcsv($f, ['procedure', 'jours', 'premier_s', 'mediane_s', 'min_s', 'max_s', 'lignes'], ',', '"', '');
 
@@ -124,7 +142,18 @@ foreach ($periodes as $jours) {
                 round(min($temps), 3), round(max($temps), 3), $lignes];
         fputcsv($f, $row, ',', '"', '');
         printf("  %-32s premier %7.3f s  médiane %7.3f s  (%d lignes)\n", $procedure, $row[2], $row[3], $lignes);
+        if (isset($colonnesEchelle[$procedure])) {
+            $echelle[$jours][$colonnesEchelle[$procedure]] = $row[3];
+        }
     }
+}
+fclose($f);
+
+$f = fopen($sortie . '/echelle.csv', 'wb');
+fputcsv($f, ['jours', ...array_values($colonnesEchelle)], ',', '"', '');
+ksort($echelle);
+foreach ($echelle as $jours => $temps) {
+    fputcsv($f, [$jours, ...array_map(static fn (string $c) => $temps[$c], array_values($colonnesEchelle))], ',', '"', '');
 }
 fclose($f);
 

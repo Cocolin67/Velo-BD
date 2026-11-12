@@ -128,9 +128,9 @@
 			\fill[fondvert] (current page.north west) ++(0,126) rectangle ++(210,135);
 			
 			% Image supérieure (à remplacer par votre image)
-			\IfFileExists{assets/template_core/sample_img.jpg}{
+			\IfFileExists{assets/template_core/sample_img.png}{
 				\node[anchor=north west,inner sep=0] at (current page.north west)
-				{\includegraphics[width=210mm,height=85mm]{assets/template_core/sample_img.jpg}};
+				{\includegraphics[width=210mm,height=85mm]{assets/template_core/sample_img.png}};
 			}{
 				\fill[blue!70!black] (current page.north west) rectangle ++(210,85);
 				\node[fill=white, text=black, font=\bfseries\Large, inner sep=3mm]
