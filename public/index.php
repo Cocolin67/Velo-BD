@@ -29,6 +29,11 @@ if (($_ENV['APP_ENV'] ?? 'prod') === 'prod') {
 AppFactory::setContainer($builder->build());
 $app = AppFactory::create();
 
+// Sous-dossier (ex. WAMP : http://localhost/velo-bd/public/) : le chemin de base est
+// déduit de l'emplacement de index.php ; vide avec `php -S` ou un vhost sur public/.
+$basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+$app->setBasePath($basePath);
+
 (require $root . '/config/middleware.php')($app);
 (require $root . '/config/routes.php')($app);
 
