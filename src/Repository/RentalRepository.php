@@ -182,8 +182,12 @@ final class RentalRepository
             $params[] = $like;
         }
 
+        // STRAIGHT_JOIN : impose de lire location en premier (idx_loc_emprunt ou velo_en_cours).
+        // Sans cela, MariaDB part de station (petite table), parcourt les ~5 M locations via
+        // idx_loc_depart_arrivee puis trie tout en mémoire : plus de 30 s sur une période d'un mois.
         $rows = $this->db->fetchAll(
-            'SELECT l.id_location, l.date_heure_emprunt, l.date_heure_restitution, l.duree_min, l.cout,
+            'SELECT STRAIGHT_JOIN
+                    l.id_location, l.date_heure_emprunt, l.date_heure_restitution, l.duree_min, l.cout,
                     l.id_velo, v.type_velo, u.prenom, u.nom, u.email,
                     sd.nom AS station_depart, sa.nom AS station_arrivee
                FROM location l
