@@ -160,7 +160,7 @@ Deux index ont été étendus pour que les statistiques ne lisent que l'index, s
 	\item \texttt{location.idx\_loc\_emprunt} : \texttt{(date\_heure\_emprunt, date\_heure\_restitution, id\_borne\_depart, id\_borne\_arrivee, duree\_min, cout)} ;
 	\item \texttt{releve\_station.idx\_releve\_horodatage} : \texttt{(horodatage, id\_station, nb\_velos\_mecaniques, nb\_velos\_electriques, nb\_bornes\_libres)}.
 \end{itemize}
-La base existante a été mise à jour par une migration ré-exécutable, sans la recréer (partie~\ref{sec:evolution}).
+La base existante a été mise à jour sans la recréer : \texttt{procedures.sql} reconstruit en place les index dont la définition diffère du schéma (partie~\ref{sec:evolution}).
 
 \subsection{Résultats}
 
