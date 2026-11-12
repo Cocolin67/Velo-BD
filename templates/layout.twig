@@ -31,11 +31,20 @@
       .link     { @apply font-medium text-emerald-700 hover:text-emerald-800 hover:underline; }
     }
   </style>
+  <style>
+    /* Transitions Swup : fondu du contenu principal entre deux pages */
+    html.is-changing .transition-fade { transition: opacity .2s ease, transform .2s ease; }
+    html.is-animating .transition-fade { opacity: 0; transform: translateY(4px); }
+    @media (prefers-reduced-motion: reduce) {
+      html.is-changing .transition-fade { transition: none; }
+      html.is-animating .transition-fade { transform: none; }
+    }
+  </style>
   {% block head %}{% endblock %}
 </head>
 <body class="min-h-full bg-zinc-50 font-sans text-zinc-900 antialiased">
   <header class="sticky top-0 z-30 border-b border-zinc-200 bg-white/85 backdrop-blur">
-    <div class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+    <div id="swup-header" class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
       <a href="{{ url_for('home') }}" class="flex items-center gap-2 font-semibold tracking-tight">
         <span class="grid size-8 place-items-center rounded-lg bg-emerald-600 text-white">
           <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-3 11.5V14l-3-3 4-3 2 3h2"/></svg>
@@ -61,7 +70,7 @@
     </div>
   </header>
 
-  <main class="mx-auto max-w-6xl px-4 py-8">
+  <main id="swup" class="transition-fade mx-auto max-w-6xl px-4 py-8">
     {% for flash in flashes() %}
       {% set styles = {
         success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
@@ -81,5 +90,24 @@
   </footer>
 
   {% block scripts %}{% endblock %}
+
+  {# Swup : navigation sans rechargement complet entre les pages (les formulaires restent classiques).
+     La page Statistiques et les exports CSV sont chargés normalement, car leurs scripts (Chart.js)
+     ne seraient pas réexécutés par Swup. Pas de cache : les données changent après chaque action. #}
+  <script src="https://cdn.jsdelivr.net/npm/swup@4.10.0/dist/Swup.umd.js"></script>
+  <script>
+    (() => {
+      if (typeof Swup === 'undefined') return;
+      const statsPath = {{ url_for('stats')|json_encode|raw }};
+      new Swup({
+        containers: ['#swup-header', '#swup'],
+        cache: false,
+        ignoreVisit: (url) => {
+          const path = new URL(url, location.href).pathname;
+          return path === statsPath || path.startsWith(statsPath + '/') || path.endsWith('.csv');
+        },
+      });
+    })();
+  </script>
 </body>
 </html>
