@@ -85,16 +85,15 @@ mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database
 
 Sous PowerShell, remplacez `< fichier.sql` par `Get-Content fichier.sql -Raw | mysql ...`.
 
-### Mettre à jour une base existante (migrations)
+### Mettre à jour une base existante
 
-Une base déjà peuplée (plusieurs Go) ne doit pas être recréée : appliquez plutôt, dans l’ordre, les scripts de [`database/migrations/`](database/migrations/). Ils sont ré-exécutables et ne reconstruisent que ce qui a changé. Ré-exécutez ensuite `procedures.sql` (lui-même ré-exécutable) pour mettre à jour les procédures.
+Une base déjà peuplée (plusieurs Go) ne doit pas être recréée : ré-exécutez `procedures.sql`, qui est ré-exécutable. En plus des procédures, `procedures.sql` aligne les index modifiés depuis la création de la base sur `schema.sql` (section *Mise à niveau des index*) : un index n’est reconstruit que si sa définition diffère, et rien n’est fait sur une base créée avec le schéma actuel.
 
 ```bash
-mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/migrations/001_index_couvrants_stats.sql
 mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/procedures.sql
 ```
 
-La migration 001 reconstruit deux index sur `location` et `releve_station` : sur une grosse base, comptez plusieurs minutes. La table reste lisible et modifiable pendant l’opération.
+Sur une base créée avant les index couvrants des statistiques, deux index de `location` et `releve_station` sont reconstruits : comptez plusieurs minutes sur la base complète. Les tables restent lisibles et modifiables pendant l’opération (`ALGORITHM=INPLACE, LOCK=NONE`).
 
 ### 2. Configurer l’application
 
@@ -132,11 +131,10 @@ config/
 database/
 ├── schema.sql          # Schéma relationnel et contraintes
 ├── triggers.sql        # Triggers d’intégrité et d’historisation
-├── procedures.sql      # Vue, procédures métier et statistiques
+├── procedures.sql      # Vue, procédures métier et statistiques, mise à niveau des index
 ├── seed.sql            # Génération de données factices
 ├── app_user.sql        # Compte MySQL applicatif (moindre privilège)
-├── demo_accounts.sql   # Comptes de démonstration
-└── migrations/         # Mises à jour ré-exécutables d’une base existante
+└── demo_accounts.sql   # Comptes de démonstration
 bin/
 ├── check-db.php        # Diagnostic de la connexion (composer check-db)
 └── bench-stats.php     # Banc de mesure des procédures statistiques

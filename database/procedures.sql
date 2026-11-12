@@ -14,7 +14,12 @@
 --      (SELECT ... FOR UPDATE) pour résister aux accès concurrents ;
 --    - l'historisation et le calcul du coût sont faits par les triggers.
 --
+--  Mise à jour d'une base existante : ré-exécuter ce script suffit. La section
+--  « Mise à niveau des index » aligne les index modifiés depuis la création de la
+--  base sur schema.sql ; sur une base neuve, elle ne fait rien.
+--
 --  Sommaire :
+--       Mise à niveau des index (bases créées avec une version antérieure du schéma)
 --    0. Vue v_stations_occupation (temps réel)
 --    1. Utilisateurs         sp_inscrire_usager, sp_creer_operateur, sp_authentifier
 --    2. Abonnements          sp_souscrire_abonnement, sp_renouveler_abonnement,
@@ -34,6 +39,62 @@
 -- =============================================================================
 
 USE velo_libre_service;
+
+-- -----------------------------------------------------------------------------
+--  Mise à niveau des index : index couvrants des statistiques
+--
+--  Une base déjà peuplée (plusieurs Go) ne peut pas être recréée depuis schema.sql.
+--  Ces appels alignent ses index sur la définition actuelle du schéma :
+--    - location.idx_loc_emprunt          (date_heure_emprunt)
+--        -> (date_heure_emprunt, date_heure_restitution,
+--            id_borne_depart, id_borne_arrivee, duree_min, cout)
+--    - releve_station.idx_releve_horodatage (horodatage)
+--        -> (horodatage, id_station, nb_velos_mecaniques,
+--            nb_velos_electriques, nb_bornes_libres)
+--  Un index n'est reconstruit que si sa définition actuelle diffère de la cible
+--  (comparaison des colonnes dans information_schema.STATISTICS) : sur une base
+--  créée avec le schéma actuel, rien n'est fait. Sinon, chaque reconstruction lit
+--  toute la table (plusieurs minutes sur la base complète) ; ALGORITHM=INPLACE,
+--  LOCK=NONE la laisse lisible et modifiable pendant l'opération.
+-- -----------------------------------------------------------------------------
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS tmp_aligner_index$$
+CREATE PROCEDURE tmp_aligner_index(IN p_table VARCHAR(64), IN p_index VARCHAR(64),
+                                   IN p_colonnes VARCHAR(512))
+BEGIN
+    DECLARE v_actuel VARCHAR(512);
+
+    SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX SEPARATOR ',')
+      INTO v_actuel
+      FROM information_schema.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = p_table AND INDEX_NAME = p_index;
+
+    IF NOT (v_actuel <=> REPLACE(p_colonnes, ' ', '')) THEN
+        SET @sql = CONCAT('ALTER TABLE `', p_table, '` ',
+                          IF(v_actuel IS NULL, '', CONCAT('DROP INDEX `', p_index, '`, ')),
+                          'ADD INDEX `', p_index, '` (', p_colonnes, '), ',
+                          'ALGORITHM=INPLACE, LOCK=NONE');
+        SELECT CONCAT(p_table, '.', p_index, ' : (', COALESCE(v_actuel, 'absent'),
+                      ') -> (', p_colonnes, ')') AS index_reconstruit;
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+        -- statistiques de l'optimiseur à jour après la reconstruction
+        SET @sql = CONCAT('ANALYZE TABLE `', p_table, '`');
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
+
+DELIMITER ;
+
+CALL tmp_aligner_index('location', 'idx_loc_emprunt',
+     'date_heure_emprunt,date_heure_restitution,id_borne_depart,id_borne_arrivee,duree_min,cout');
+CALL tmp_aligner_index('releve_station', 'idx_releve_horodatage',
+     'horodatage,id_station,nb_velos_mecaniques,nb_velos_electriques,nb_bornes_libres');
+DROP PROCEDURE tmp_aligner_index;
 
 -- -----------------------------------------------------------------------------
 --  0. Occupation des stations en temps réel
