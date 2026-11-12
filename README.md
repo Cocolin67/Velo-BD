@@ -72,7 +72,6 @@ Exécuter les scripts dans cet ordre :
 4. [`database/seed.sql`](database/seed.sql), puis `CALL sp_seed_petit();` (ou `sp_seed_demo()`) : données factices
 5. [`database/app_user.sql`](database/app_user.sql) : compte applicatif `velo_app`. **Remplacez d’abord `CHANGER_CE_MOT_DE_PASSE`.**
 6. [`database/demo_accounts.sql`](database/demo_accounts.sql) : un compte de démonstration par rôle.
-7. *(facultatif, à la place de l’étape 4)* [`database/test_data.sql`](database/test_data.sql) : petit jeu de données aléatoire pour essayer le site (15 stations, ~2 000 trajets, signalements, interventions). Il s’ajoute aux données existantes, donne un historique au compte `usager@velo.local` et crée des comptes `test.usager.1.<n>@velo.local` utilisables (mot de passe `Demo1234!`). Importable aussi depuis phpMyAdmin.
 
 ```bash
 mysql -h 127.0.0.1 -P 3307 -u root -p --default-character-set=utf8mb4 < database/schema.sql
@@ -137,7 +136,6 @@ database/
 ├── seed.sql            # Génération de données factices
 ├── app_user.sql        # Compte MySQL applicatif (moindre privilège)
 ├── demo_accounts.sql   # Comptes de démonstration
-├── test_data.sql       # Petit jeu de données aléatoire pour tester le site
 └── migrations/         # Mises à jour ré-exécutables d’une base existante
 bin/
 ├── check-db.php        # Diagnostic de la connexion (composer check-db)
