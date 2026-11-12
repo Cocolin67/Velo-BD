@@ -8,3 +8,6 @@ docs/diagrams/*.pdf
 *.fls
 *.out
 *.toc
+
+# Configuration locale
+.env
