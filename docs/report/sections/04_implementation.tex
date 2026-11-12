@@ -80,7 +80,7 @@ Trois événements automatisent les traitements périodiques :
 	\item \texttt{ev\_expirer\_abonnements}, toutes les heures : renouvellement automatique ou expiration des abonnements échus ;
 	\item \texttt{ev\_facturer\_locations}, chaque nuit à 2~h : facturation des trajets payants.
 \end{itemize}
-Ils nécessitent l'activation de l'ordonnanceur (\texttt{event\_scheduler=ON} dans la configuration du serveur).
+Ils nécessitent l'activation de l'ordonnanceur (\texttt{event\_scheduler=ON} dans la configuration du serveur). Cinq événements facultatifs, installés par \texttt{simulation.sql}, simulent en plus l'activité des usagers et des opérateurs (partie~\ref{sec:simulation}).
 
 \subsection{Sécurité}
 

@@ -21,6 +21,38 @@ Pour que les statistiques et les mesures de performances aient un sens, les donn
 
 Quelques simplifications demeurent : la capacité des bornes n'est pas simulée dans le temps (seule la position actuelle respecte \og une borne, un vélo \fg{}), et les déplacements des tournées de régulation ne sont pas reportés dans l'historique des positions.
 
+\subsection{Simulation de l'activité}\label{sec:simulation}
+
+Le jeu de données s'arrête au moment du chargement : sans activité, la carte, les tableaux de bord et les statistiques de la journée restent figés. Le script facultatif \texttt{simulation.sql} fait \og vivre \fg{} la base en prolongeant l'historique en temps réel, par cinq événements planifiés (tableau~\ref{tab:simulation}).
+
+\begin{table}[htbp]\centering\small
+	\begin{tabular}{l l >{\raggedright\arraybackslash}p{0.55\linewidth}}
+		\toprule
+		\textbf{Événement} & \textbf{Fréquence} & \textbf{Activité simulée} \\
+		\midrule
+		\texttt{ev\_sim\_trajets}      & 1~min  & restitutions puis emprunts, selon l'heure et le jour \\
+		\texttt{ev\_sim\_abonnements}  & 1~h    & inscriptions de nouveaux usagers et réabonnements \\
+		\texttt{ev\_sim\_signalements} & 15~min & signalements de vélos (qui passent en \og défectueux \fg{}) et de stations \\
+		\texttt{ev\_sim\_maintenance}  & 15~min & retrait des vélos défectueux, réparation et remise en circulation, de 7~h à 19~h \\
+		\texttt{ev\_sim\_regulation}   & 1~h    & tournées de rééquilibrage des stations pleines vers les plus vides, de 6~h à 22~h \\
+		\bottomrule
+	\end{tabular}
+	\caption{Événements de la simulation}\label{tab:simulation}
+\end{table}
+
+Chaque événement appelle une procédure \texttt{sp\_sim\_*} qui joue le rôle des usagers et des opérateurs en appelant \emph{les mêmes procédures métier que l'application} (\texttt{sp\_emprunter\_velo}, \texttt{sp\_rendre\_velo}, \texttt{sp\_souscrire\_abonnement}, \texttt{sp\_ouvrir\_intervention}, \texttt{sp\_deplacer\_velo\_tournee}\ldots). Les données simulées passent donc par les mêmes contrôles, déclencheurs (historisation, coût) et événements (relevés, expiration, facturation) que les actions réelles, et la simulation sert aussi de test continu des règles de gestion. Une action refusée par une règle (vélo emprunté entre-temps, borne occupée) est ignorée, comme le serait la tentative d'un vrai usager.
+
+La simulation reprend les régularités du générateur :
+\begin{itemize}
+	\item \textbf{profil horaire} : le nombre d'emprunts par minute suit un profil avec des pointes à 8~h et 18~h, un creux la nuit et une activité plus faible et plus étalée le week-end ; par défaut, 1~\% de la flotte est emprunté chaque minute à l'heure de pointe ;
+	\item \textbf{durées} : chaque minute, un trajet en cours se termine avec une probabilité de $1/15$ (durée moyenne de 15~minutes), et au plus tard au bout de 3~heures ;
+	\item \textbf{mouvement pendulaire} : en semaine, la borne d'arrivée est choisie parmi trois bornes libres tirées au hasard, la plus centrale le matin et la plus éloignée du centre le soir ; les stations centrales se remplissent le matin et se vident le soir, ce qui donne du travail à la régulation.
+\end{itemize}
+
+Les tirages aléatoires partent d'un identifiant pris au hasard et lisent la clé primaire jusqu'au premier candidat valide, au lieu de trier toute la table (\texttt{ORDER BY RAND()}) : le coût d'un emprunt simulé ne dépend pas du volume de la base. Un verrou applicatif (\texttt{GET\_LOCK}) empêche deux exécutions d'un même événement de se chevaucher, et la procédure \texttt{sp\_sim\_activer} suspend ou relance la simulation, par exemple pendant les mesures de performances.
+
+Sur le petit jeu de données (300~vélos), une journée de semaine simulée en avançant l'horloge de session minute par minute s'exécute en une vingtaine de secondes : environ 1\,400~trajets, une soixantaine d'abonnements, 24~tournées déplaçant 96~vélos. Les contrôles de \texttt{sp\_seed\_verifier} restent satisfaits, à une exception attendue : le contrôle de continuité des chaînes de trajets compte les vélos déplacés par une tournée ou reposés sur une autre borne après réparation, déplacements que le générateur ne produit pas mais qui sont normaux dans un réseau réel. Contrairement aux données générées, ces déplacements sont reportés dans l'historique des positions par les déclencheurs.
+
 \subsection{Volumes}
 
 Le tableau~\ref{tab:volumes} donne les volumes de la base utilisée pour les mesures de performances ; il est lu dans \texttt{data/contexte.csv}, produit par le script de mesure.
