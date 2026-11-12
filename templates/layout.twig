@@ -29,15 +29,30 @@
       .table td { @apply whitespace-nowrap px-4 py-3 text-zinc-700; }
       .table tbody tr { @apply hover:bg-zinc-50/70; }
       .link     { @apply font-medium text-emerald-700 hover:text-emerald-800 hover:underline; }
+
+      /* En-têtes triables (macro ui.th et tableaux data-sortable) */
+      .sort-head  { @apply inline-flex items-center gap-1 align-middle; }
+      .sort-btn   { @apply inline-flex cursor-pointer items-center gap-1 rounded hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40; font: inherit; letter-spacing: inherit; text-transform: inherit; }
+      .sort-icon  { @apply size-3.5 shrink-0 opacity-0 transition-opacity; }
+      .sort-btn:hover .sort-icon, .sort-btn:focus-visible .sort-icon { @apply opacity-100; }
+      th[aria-sort="ascending"], th[aria-sort="descending"] { @apply text-zinc-900; }
+      th[aria-sort="ascending"] .sort-icon, th[aria-sort="descending"] .sort-icon { @apply text-emerald-600 opacity-100; }
+      .sort-reset { @apply grid size-4 shrink-0 cursor-pointer place-items-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700; }
+      .sort-reset svg { @apply size-3; }
+      /* Colonnes alignées à droite : flèche et croix à gauche du libellé, qui reste au-dessus des chiffres */
+      th.text-right .sort-head, th.text-right .sort-btn { @apply flex-row-reverse; }
     }
   </style>
   <style>
-    /* Transitions Swup : fondu du contenu principal entre deux pages */
-    html.is-changing .transition-fade { transition: opacity .2s ease, transform .2s ease; }
-    html.is-animating .transition-fade { opacity: 0; transform: translateY(4px); }
+    /* Transitions Swup : le contenu glisse de gauche à droite. L'ancienne page sort vers la
+       droite (is-leaving), la nouvelle entre par la gauche (is-rendering) puis revient en place. */
+    html.is-changing .transition-slide { transition: opacity .22s ease, transform .22s ease; }
+    html.is-animating.is-leaving .transition-slide { opacity: 0; transform: translateX(3rem); }
+    html.is-animating.is-rendering .transition-slide { opacity: 0; transform: translateX(-3rem); }
+    body { overflow-x: clip; }   /* pas de barre de défilement horizontale pendant le glissement */
     @media (prefers-reduced-motion: reduce) {
-      html.is-changing .transition-fade { transition: none; }
-      html.is-animating .transition-fade { transform: none; }
+      html.is-animating.is-leaving .transition-slide,
+      html.is-animating.is-rendering .transition-slide { transform: none; }
     }
   </style>
   {% block head %}{% endblock %}
@@ -70,7 +85,7 @@
     </div>
   </header>
 
-  <main id="swup" class="transition-fade mx-auto max-w-6xl px-4 py-8">
+  <main id="swup" class="transition-slide mx-auto max-w-6xl px-4 py-8">
     {% for flash in flashes() %}
       {% set styles = {
         success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
@@ -91,22 +106,117 @@
 
   {% block scripts %}{% endblock %}
 
+  {# Tri dans le navigateur des tableaux non paginés (<table data-sortable>), avec le même
+     comportement que la macro ui.th des tableaux triés par le serveur. Valeur d'une cellule :
+     son attribut data-sort-value s'il existe, sinon son texte ; « — » et vide en fin de liste. #}
+  <script>
+    (() => {
+      const ICON_DOWN = '<path d="M12 5v14M19 12l-7 7-7-7"/>';
+      const ICON_UP   = '<path d="M12 19V5M5 12l7-7 7 7"/>';
+      const svg = (paths, cls, width) =>
+        `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+
+      const valueOf = (cell) => {
+        const raw = (cell?.dataset.sortValue ?? cell?.textContent ?? '').trim();
+        if (raw === '' || raw === '—') return null;
+        const num = raw.replace(/[\s  ]/g, '').replace(/^#/, '').replace(/(€|%|km|min)$/, '').replace(',', '.');
+        return /^-?\d+(\.\d+)?$/.test(num) ? Number(num) : raw;
+      };
+      const compare = (a, b) => {
+        if (a === null || b === null) return (a === null) - (b === null);   // vides toujours en dernier
+        if (typeof a === 'number' && typeof b === 'number') return a - b;
+        return String(a).localeCompare(String(b), 'fr', { numeric: true, sensitivity: 'base' });
+      };
+
+      function render(table) {
+        const { col, dir } = table._sort;
+        table.querySelectorAll('thead th').forEach((th, i) => {
+          if (!th._label) return;
+          const active = i === col;
+          th.setAttribute('aria-sort', active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none');
+          const next = active && dir === 'asc' ? 'décroissant' : 'croissant';
+          th.innerHTML = `<span class="sort-head"><button type="button" class="sort-btn" title="Trier par ordre ${next}"><span></span>${svg(active && dir === 'desc' ? ICON_UP : ICON_DOWN, 'sort-icon', 2.25)}</button>`
+            + (active ? `<button type="button" class="sort-reset" title="Réinitialiser le tri" aria-label="Réinitialiser le tri">${svg('<path d="M18 6 6 18M6 6l12 12"/>', '', 2.5)}</button>` : '')
+            + '</span>';
+          th.querySelector('.sort-btn span').textContent = th._label;
+          th.querySelector('.sort-btn').addEventListener('click', () => sortBy(table, i));
+          th.querySelector('.sort-reset')?.addEventListener('click', () => sortBy(table, null));
+        });
+      }
+
+      function sortBy(table, col) {
+        const state = table._sort;
+        state.dir = col !== null && col === state.col && state.dir === 'asc' ? 'desc' : 'asc';
+        state.col = col;
+        const body = table.tBodies[0];
+        const rows = [...body.rows];
+        rows.sort(col === null
+          ? (a, b) => a._index - b._index                                   // ordre d'origine
+          : (a, b) => (state.dir === 'asc' ? 1 : -1) * compare(valueOf(a.cells[col]), valueOf(b.cells[col]))
+                      || a._index - b._index);
+        body.append(...rows);
+        render(table);
+      }
+
+      window.initSortableTables = () => {
+        document.querySelectorAll('table[data-sortable]').forEach((table) => {
+          if (table._sort || !table.tHead || !table.tBodies[0]) return;
+          table._sort = { col: null, dir: 'asc' };
+          [...table.tBodies[0].rows].forEach((row, i) => { row._index = i; });
+          table.querySelectorAll('thead th').forEach((th) => {
+            if (!th.hasAttribute('data-nosort') && th.textContent.trim() !== '') th._label = th.textContent.trim();
+          });
+          render(table);
+        });
+      };
+      window.initSortableTables();
+    })();
+  </script>
+
   {# Swup : navigation sans rechargement complet entre les pages (les formulaires restent classiques).
      La page Statistiques et les exports CSV sont chargés normalement, car leurs scripts (Chart.js)
-     ne seraient pas réexécutés par Swup. Pas de cache : les données changent après chaque action. #}
+     ne seraient pas réexécutés par Swup. Pas de cache : les données changent après chaque action.
+
+     Tri et pagination d'un tableau (liens .sort-btn, .sort-reset, et ceux de [data-zone-pager]
+     dans un [data-zone="z"]) : seuls #z-head, #z-body, #z-pager et #z-fields sont remplacés,
+     sans animation ni retour en haut de page. Le reste de la page (graphiques compris) ne bouge pas,
+     ce qui permet aussi de trier les tableaux de la page Statistiques avec Swup. #}
   <script src="https://cdn.jsdelivr.net/npm/swup@4.10.0/dist/Swup.umd.js"></script>
   <script>
     (() => {
       if (typeof Swup === 'undefined') return;
       const statsPath = {{ url_for('stats')|json_encode|raw }};
-      new Swup({
+
+      // Parties d'un tableau à remplacer quand le lien cliqué trie ou pagine ce tableau, sinon null
+      const zoneParts = (el) => {
+        const zone = el?.closest('[data-zone]');
+        if (!zone || !el.closest('.sort-btn, .sort-reset, [data-zone-pager] a')) return null;
+        const parts = ['head', 'body', 'pager', 'fields'].map((p) => `#${zone.dataset.zone}-${p}`);
+        return parts.filter((sel) => document.querySelector(sel));
+      };
+
+      const swup = new Swup({
         containers: ['#swup-header', '#swup'],
         cache: false,
-        ignoreVisit: (url) => {
+        ignoreVisit: (url, { el } = {}) => {
           const path = new URL(url, location.href).pathname;
-          return path === statsPath || path.startsWith(statsPath + '/') || path.endsWith('.csv');
+          if (path.endsWith('.csv')) return true;
+          if (zoneParts(el)) return false;
+          return path === statsPath || path.startsWith(statsPath + '/');
         },
       });
+
+      swup.hooks.on('visit:start', (visit) => {
+        const parts = zoneParts(visit.trigger.el);
+        if (!parts) return;
+        visit.containers       = parts;
+        visit.animation.animate = false;
+        visit.scroll.reset     = false;
+        visit.scroll.target    = false;   // ignore l'ancre (#od...) des liens de pagination
+      });
+
+      // Le contenu remplacé par Swup n'exécute pas de script : on réactive les tableaux triables
+      swup.hooks.on('page:view', () => window.initSortableTables?.());
     })();
   </script>
 </body>

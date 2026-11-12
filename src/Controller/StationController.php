@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Database\BusinessException;
 use App\Repository\StationRepository;
 use App\Support\Flash;
+use App\Support\Sort;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
@@ -29,17 +30,18 @@ final class StationController extends Controller
             'q'     => self::str($query, 'q', 100),
             'etat'  => self::oneOf($query, 'etat', StationRepository::ETATS),
             'dispo' => self::oneOf($query, 'dispo', ['velos', 'electriques', 'bornes']),
-            'sort'  => self::oneOf($query, 'sort', ['nom', 'disponibles', 'libres', 'remplissage'], 'nom'),
         ];
+        $tri    = Sort::fromQuery($query, array_keys(StationRepository::SORTABLE));
         $page   = self::page($query);
-        $result = $this->stations->search($filters, $page, self::PER_PAGE);
+        $result = $this->stations->search($filters, $page, self::PER_PAGE, $tri);
 
         return $this->render($response, 'stations/index.twig', [
             'stations' => $result['rows'],
             'has_next' => $result['has_next'],
             'page'     => $page,
             'filters'  => $filters,
-            'query'    => array_filter($filters),
+            'query'    => array_filter($filters) + $tri->params(),
+            'tri'      => $tri->view('stations', array_filter($filters)),
             'etats'    => StationRepository::ETATS,
         ]);
     }

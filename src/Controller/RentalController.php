@@ -10,6 +10,7 @@ use App\Repository\StationRepository;
 use App\Repository\SubscriptionRepository;
 use App\Security\Auth;
 use App\Support\Flash;
+use App\Support\Sort;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\Twig;
@@ -35,7 +36,9 @@ final class RentalController extends Controller
         $page      = self::page($query);
         $idStation = self::int($query, 'station');
         $current   = $this->rentals->current($id);
-        $history   = $this->rentals->history($id, $page, self::PER_PAGE);
+        $tri       = Sort::fromQuery($query, RentalRepository::SORTABLE_HISTORY);
+        $history   = $this->rentals->history($id, $page, self::PER_PAGE, $tri);
+        $kept      = $idStation ? ['station' => $idStation] : [];   // station choisie pour emprunter
 
         return $this->render($response, 'rentals/index.twig', [
             'current'      => $current,
@@ -47,6 +50,8 @@ final class RentalController extends Controller
             'history'      => $history['rows'],
             'has_next'     => $history['has_next'],
             'page'         => $page,
+            'query'        => $kept + $tri->params(),
+            'tri'          => $tri->view('rentals', $kept),
         ]);
     }
 
@@ -99,15 +104,18 @@ final class RentalController extends Controller
             'type'    => self::oneOf($query, 'type', ['mecanique', 'electrique']),
             'q'       => self::str($query, 'q', 100),
         ];
+        $tri    = Sort::fromQuery($query, array_keys(RentalRepository::SORTABLE));
         $page   = self::page($query);
-        $result = $this->rentals->search($filters, $page, self::PER_PAGE);
+        $result = $this->rentals->search($filters, $page, self::PER_PAGE, $tri);
+        $kept   = array_filter($filters, static fn ($v) => $v !== null && $v !== '');
 
         return $this->render($response, 'rentals/admin.twig', [
             'rentals'  => $result['rows'],
             'has_next' => $result['has_next'],
             'page'     => $page,
             'filters'  => $filters,
-            'query'    => array_filter($filters, static fn ($v) => $v !== null && $v !== ''),
+            'query'    => $kept + $tri->params(),
+            'tri'      => $tri->view('rentals.admin', $kept),
             'stations' => $this->stations->names(),
         ]);
     }

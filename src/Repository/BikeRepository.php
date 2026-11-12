@@ -5,12 +5,23 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Database\Database;
+use App\Support\Sort;
 
 /** Flotte de vélos et historiques (alimentés par les triggers trg_velo_ai / trg_velo_au). */
 final class BikeRepository
 {
     public const ETATS = ['disponible', 'en_location', 'en_atelier', 'defectueux'];
     public const TYPES = ['mecanique', 'electrique'];
+
+    /** Colonnes triables depuis l'en-tête du tableau (voir App\Support\Sort) */
+    public const SORTABLE = [
+        'velo'     => 'v.id_velo',
+        'type'     => 'CAST(v.type_velo AS CHAR)',
+        'etat'     => 'CAST(v.etat_velo AS CHAR)',
+        'batterie' => 'v.niveau_batterie',
+        'position' => ['s.nom', 'b.num_borne'],
+        'service'  => 'v.date_mise_en_service',
+    ];
 
     public function __construct(private readonly Database $db)
     {
@@ -20,7 +31,7 @@ final class BikeRepository
      * @param array{id: ?int, type: ?string, etat: ?string, station: ?int, batterie: ?int} $f
      * @return array{rows: list<array<string, mixed>>, has_next: bool}
      */
-    public function search(array $f, int $page, int $perPage): array
+    public function search(array $f, int $page, int $perPage, ?Sort $tri = null): array
     {
         $where  = ['1 = 1'];
         $params = [];
@@ -52,7 +63,7 @@ final class BikeRepository
                LEFT JOIN borne b   ON b.id_borne   = v.id_borne
                LEFT JOIN station s ON s.id_station = b.id_station
               WHERE ' . implode(' AND ', $where) . '
-              ORDER BY v.id_velo
+              ORDER BY ' . ($tri?->orderBy(self::SORTABLE, 'v.id_velo', 'v.id_velo', ['batterie', 'position']) ?? 'v.id_velo') . '
               LIMIT ? OFFSET ?',
             [...$params, $perPage + 1, ($page - 1) * $perPage],
         );

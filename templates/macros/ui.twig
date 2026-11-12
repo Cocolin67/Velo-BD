@@ -2,13 +2,18 @@
    Composants d'interface réutilisables
    --------------------------------------------------------------------------- #}
 
-{# Lien de navigation, actif si l'URL courante est la route (ou une sous-page) #}
+{# Lien de navigation, actif si l'URL courante est la route (ou une sous-page) :
+   texte en couleur, en gras et souligné. #}
 {% macro nav_link(route, label) %}
   {% set url = url_for(route) %}
-  {% set path = current_url() %}
+  {# current_url() de Slim ajoute le chemin de base devant le chemin de la requête, qui le contient
+     déjà sous Apache dans un sous-dossier (WAMP/XAMPP) : on retire ce préfixe en trop. #}
+  {% set path = current_url()|slice(base_path()|length) %}
   {% set active = route == 'home' ? path == url : (path == url or path starts with url ~ '/') %}
   <a href="{{ url }}"
-     class="rounded-lg px-3 py-1.5 text-sm font-medium transition {{ active ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900' }}"
+     class="rounded-lg px-3 py-1.5 text-sm transition {{ active
+       ? 'font-semibold text-emerald-700 underline decoration-emerald-600 decoration-2 underline-offset-[6px]'
+       : 'font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900' }}"
      {% if active %}aria-current="page"{% endif %}>{{ label }}</a>
 {% endmacro %}
 
@@ -44,6 +49,46 @@
 {# État vide #}
 {% macro empty(message) %}
   <div class="px-6 py-12 text-center text-sm text-zinc-500">{{ message }}</div>
+{% endmacro %}
+
+{# En-tête de colonne triable (tri côté serveur, voir App\Support\Sort::view).
+   Clic sur le libellé : croissant, puis alterne croissant / décroissant.
+   Flèche vers le bas = croissant (affichée au survol tant qu'aucun tri n'est actif),
+   flèche vers le haut = décroissant ; la croix revient à l'ordre par défaut.
+   Le même rendu est produit en JavaScript pour les tableaux triés dans le navigateur
+   (attribut data-sortable, voir layout.twig). #}
+{% macro th(label, key, tri, class = '') %}
+  {% set active = tri.key == key %}
+  {% set next = active and tri.dir == 'asc' ? 'desc' : 'asc' %}
+  {% set anchor = tri.anchor ? '#' ~ tri.anchor : '' %}
+  <th class="{{ class }}" aria-sort="{{ active ? (tri.dir == 'asc' ? 'ascending' : 'descending') : 'none' }}">
+    <span class="sort-head">
+      <a class="sort-btn" href="{{ url_for(tri.route, tri.args, tri.query|merge({('tri' ~ tri.suffix): key, ('ordre' ~ tri.suffix): next})) ~ anchor }}"
+         title="Trier par ordre {{ next == 'asc' ? 'croissant' : 'décroissant' }}">
+        <span>{{ label }}</span>
+        <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          {% if active and tri.dir == 'desc' %}<path d="M12 19V5M5 12l7-7 7 7"/>{% else %}<path d="M12 5v14M19 12l-7 7-7-7"/>{% endif %}
+        </svg>
+      </a>
+      {% if active %}
+        <a class="sort-reset" href="{{ url_for(tri.route, tri.args, tri.query) ~ anchor }}" title="Réinitialiser le tri" aria-label="Réinitialiser le tri">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </a>
+      {% endif %}
+    </span>
+  </th>
+{% endmacro %}
+
+{# Champs cachés : un formulaire de filtres conserve le tri choisi dans l'en-tête.
+   zone = data-zone du tableau : l'enveloppe est remplacée avec lui quand on trie sans
+   recharger la page (voir layout.twig). #}
+{% macro sort_fields(tri, zone) %}
+  <span id="{{ zone }}-fields" hidden>
+    {% if tri.key %}
+      <input type="hidden" name="tri{{ tri.suffix }}" value="{{ tri.key }}">
+      <input type="hidden" name="ordre{{ tri.suffix }}" value="{{ tri.dir }}">
+    {% endif %}
+  </span>
 {% endmacro %}
 
 {# Pagination précédent / suivant (pas de COUNT(*) coûteux sur les grosses tables) #}

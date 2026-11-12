@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Database\Database;
+use App\Support\Sort;
 
 /**
  * Locations : emprunt et restitution via les procédures stockées (règles métier,
@@ -12,6 +13,26 @@ use App\Database\Database;
  */
 final class RentalRepository
 {
+    /**
+     * Colonnes triables des listes de locations (voir App\Support\Sort).
+     * Sans tri choisi, l'ordre par date d'emprunt décroissante profite de l'index idx_loc_emprunt ;
+     * un autre tri impose un tri en mémoire des locations filtrées (période, station...).
+     */
+    public const SORTABLE = [
+        'id'      => 'l.id_location',
+        'emprunt' => 'l.date_heure_emprunt',
+        'usager'  => ['u.nom', 'u.prenom'],
+        'trajet'  => ['sd.nom', 'sa.nom'],
+        'velo'    => 'l.id_velo',
+        'duree'   => 'l.duree_min',
+        'cout'    => 'l.cout',
+    ];
+
+    /** Colonnes de l'historique d'un usager (pas de colonne usager ni numéro) */
+    public const SORTABLE_HISTORY = ['emprunt', 'trajet', 'velo', 'duree', 'cout'];
+
+    private const NULLABLE = ['trajet', 'duree', 'cout'];
+
     public function __construct(private readonly Database $db)
     {
     }
@@ -98,8 +119,10 @@ final class RentalRepository
     }
 
     /** @return array{rows: list<array<string, mixed>>, has_next: bool} */
-    public function history(int $idUsager, int $page, int $perPage): array
+    public function history(int $idUsager, int $page, int $perPage, ?Sort $tri = null): array
     {
+        $order = $tri?->orderBy(self::SORTABLE, 'l.date_heure_emprunt DESC', 'l.id_location DESC', self::NULLABLE)
+            ?? 'l.date_heure_emprunt DESC';
         $rows = $this->db->fetchAll(
             'SELECT l.id_location, l.id_velo, v.type_velo, l.date_heure_emprunt, l.date_heure_restitution,
                     l.duree_min, l.cout, sd.nom AS station_depart, sa.nom AS station_arrivee
@@ -111,7 +134,7 @@ final class RentalRepository
                LEFT JOIN borne ba   ON ba.id_borne   = l.id_borne_arrivee
                LEFT JOIN station sa ON sa.id_station = ba.id_station
               WHERE a.id_utilisateur = ?
-              ORDER BY l.date_heure_emprunt DESC
+              ORDER BY ' . $order . '
               LIMIT ? OFFSET ?',
             [$idUsager, $perPage + 1, ($page - 1) * $perPage],
         );
@@ -125,8 +148,10 @@ final class RentalRepository
      * @param array{statut: ?string, du: string, au: string, station: ?int, type: ?string, q: string} $f
      * @return array{rows: list<array<string, mixed>>, has_next: bool}
      */
-    public function search(array $f, int $page, int $perPage): array
+    public function search(array $f, int $page, int $perPage, ?Sort $tri = null): array
     {
+        $order = $tri?->orderBy(self::SORTABLE, 'l.date_heure_emprunt DESC', 'l.id_location DESC', self::NULLABLE)
+            ?? 'l.date_heure_emprunt DESC';
         $where  = [];
         $params = [];
 
@@ -170,7 +195,7 @@ final class RentalRepository
                LEFT JOIN borne ba   ON ba.id_borne      = l.id_borne_arrivee
                LEFT JOIN station sa ON sa.id_station    = ba.id_station
               WHERE ' . implode(' AND ', $where) . '
-              ORDER BY l.date_heure_emprunt DESC
+              ORDER BY ' . $order . '
               LIMIT ? OFFSET ?',
             [...$params, $perPage + 1, ($page - 1) * $perPage],
         );

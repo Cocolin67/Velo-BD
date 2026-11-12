@@ -14,7 +14,8 @@
     {% endif %}
   </div>
 
-  <form method="get" class="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto_auto]">
+  <form method="get" class="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto]">
+    {{ ui.sort_fields(tri, 'stations') }}
     <input type="search" name="q" value="{{ filters.q }}" placeholder="Rechercher un nom ou une adresse…" class="input" aria-label="Recherche">
     <select name="etat" class="input" aria-label="État">
       <option value="">Tous les états</option>
@@ -26,32 +27,26 @@
       <option value="electriques" {{ filters.dispo == 'electriques' ? 'selected' }}>Avec vélos électriques</option>
       <option value="bornes" {{ filters.dispo == 'bornes' ? 'selected' }}>Avec bornes libres</option>
     </select>
-    <select name="sort" class="input" aria-label="Tri">
-      <option value="nom" {{ filters.sort == 'nom' ? 'selected' }}>Tri : nom</option>
-      <option value="disponibles" {{ filters.sort == 'disponibles' ? 'selected' }}>Tri : vélos disponibles</option>
-      <option value="libres" {{ filters.sort == 'libres' ? 'selected' }}>Tri : bornes libres</option>
-      <option value="remplissage" {{ filters.sort == 'remplissage' ? 'selected' }}>Tri : remplissage</option>
-    </select>
     <div class="flex gap-2">
       <button class="btn-primary">Filtrer</button>
-      {% if query %}<a href="{{ url_for('stations') }}" class="btn-ghost">Effacer</a>{% endif %}
+      {% if query|filter((v, k) => k not in ['tri', 'ordre']) %}<a href="{{ url_for('stations') }}" class="btn-ghost">Effacer</a>{% endif %}
     </div>
   </form>
 
-  <div class="card overflow-hidden">
+  <div class="card overflow-hidden" data-zone="stations">
     {% if stations is empty %}
       {{ ui.empty('Aucune station ne correspond à ces critères.') }}
     {% else %}
       <div class="overflow-x-auto">
         <table class="table">
-          <thead class="bg-zinc-50">
+          <thead id="stations-head" class="bg-zinc-50">
             <tr>
-              <th>Station</th><th>État</th>
-              <th class="text-right">Mécaniques</th><th class="text-right">Électriques</th>
-              <th class="text-right">Bornes libres</th><th>Remplissage</th>
+              {{ ui.th('Station', 'nom', tri) }}{{ ui.th('État', 'etat', tri) }}
+              {{ ui.th('Mécaniques', 'mecaniques', tri, 'text-right') }}{{ ui.th('Électriques', 'electriques', tri, 'text-right') }}
+              {{ ui.th('Bornes libres', 'libres', tri, 'text-right') }}{{ ui.th('Remplissage', 'remplissage', tri) }}
             </tr>
           </thead>
-          <tbody class="divide-y divide-zinc-100">
+          <tbody id="stations-body" class="divide-y divide-zinc-100">
             {% for s in stations %}
               <tr>
                 <td>
@@ -68,7 +63,7 @@
           </tbody>
         </table>
       </div>
-      {{ ui.pagination('stations', page, has_next, query) }}
+      <div id="stations-pager" data-zone-pager>{{ ui.pagination('stations', page, has_next, query) }}</div>
     {% endif %}
   </div>
 {% endblock %}

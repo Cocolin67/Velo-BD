@@ -44,14 +44,15 @@
       <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Dernières locations</h2>
       {% if rentals is empty %}{{ ui.empty('Aucune location.') }}{% else %}
         <div class="overflow-x-auto">
-          <table class="table">
+          <table class="table" data-sortable>
+            <thead class="bg-zinc-50"><tr><th>Emprunt</th><th>Trajet</th><th class="text-right">Durée</th><th class="text-right">Coût</th></tr></thead>
             <tbody class="divide-y divide-zinc-100">
               {% for l in rentals %}
                 <tr>
-                  <td>{{ l.date_heure_emprunt|dt }}</td>
+                  <td data-sort-value="{{ l.date_heure_emprunt }}">{{ l.date_heure_emprunt|dt }}</td>
                   <td>{{ l.station_depart }} <span class="text-zinc-400">→</span> {{ l.station_arrivee ?? 'en cours' }}</td>
-                  <td class="text-right tabular-nums">{{ l.duree_min|duration }}</td>
-                  <td class="text-right tabular-nums">{{ l.cout|money }}</td>
+                  <td class="text-right tabular-nums" data-sort-value="{{ l.duree_min }}">{{ l.duree_min|duration }}</td>
+                  <td class="text-right tabular-nums" data-sort-value="{{ l.cout }}">{{ l.cout|money }}</td>
                 </tr>
               {% endfor %}
             </tbody>

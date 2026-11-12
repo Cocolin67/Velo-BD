@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Repository\StatsRepository;
 use App\Support\Flash;
+use App\Support\Sort;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
@@ -36,6 +37,21 @@ final class StatsController extends Controller
     /** Nombre maximal de trajets origine-destination consultables (paginés) */
     private const MAX_ROUTES = 100;
 
+    /**
+     * Tableaux triables par en-tête : suffixe des paramètres tri / ordre, paramètre de page,
+     * ancre de retour et colonnes (clé d'URL => champ de la ligne). Le tri s'applique au
+     * résultat complet, avant pagination.
+     */
+    private const TABLES = [
+        'od'  => ['p_od', 'od', ['depart' => 'station_depart', 'arrivee' => 'station_arrivee',
+                                 'trajets' => 'nb_trajets', 'duree' => 'duree_moyenne_min']],
+        'st'  => ['p_st', 'remplissage', ['station' => 'nom', 'remplissage' => 'taux']],
+        'reg' => ['p_reg', 'reequilibrage', ['station' => 'nom', 'situation' => 'situation',
+                                              'velos' => 'nb_velos', 'remplissage' => 'taux_remplissage']],
+        'dep' => ['p_dep', 'deplacements', ['de' => 'station_depart', 'vers' => 'station_arrivee',
+                                             'velos' => 'nb_velos_a_deplacer', 'distance' => 'distance_km']],
+    ];
+
     public function __construct(Twig $view, Flash $flash, private readonly StatsRepository $stats)
     {
         parent::__construct($view, $flash);
@@ -59,10 +75,13 @@ final class StatsController extends Controller
 
         $base  = ['du' => $p['du'], 'au' => $p['au'], 'granularite' => $p['granularite']];
         $pages = [];   // page courante des autres tableaux, conservée quand on en pagine un
-        foreach (['p_od', 'p_st', 'p_reg', 'p_dep'] as $key) {
-            if (self::pageOf($query, $key) > 1) {
-                $pages[$key] = self::pageOf($query, $key);
+        $sorts = [];   // tri de chaque tableau, conservé de la même façon
+        foreach (self::TABLES as $name => [$pageParam, , $fields]) {
+            if (self::pageOf($query, $pageParam) > 1) {
+                $pages[$pageParam] = self::pageOf($query, $pageParam);
             }
+            $sorts[$name] = Sort::fromQuery($query, array_keys($fields), '_' . $name);
+            $pages       += $sorts[$name]->params();
         }
         $data = [
             'period' => $p,
@@ -77,6 +96,10 @@ final class StatsController extends Controller
             'query'  => $base,                    // liens d'export CSV
             'page_q' => $base + ['vue' => $vue] + $pages,  // liens de pagination
         ];
+        foreach (self::TABLES as $name => [$pageParam, $anchor]) {
+            $data['tri_' . $name] = $sorts[$name]->view('stats', $data['page_q'], $pageParam, $anchor);
+        }
+        $sorted = fn (string $name, array $rows): array => $sorts[$name]->apply($rows, self::TABLES[$name][2]);
         $charts = [];
 
         switch ($vue) {
@@ -85,18 +108,21 @@ final class StatsController extends Controller
                     'periods' => ['labels' => array_column($periods, 'periode'), 'values' => array_map('intval', array_column($periods, 'nb_trajets'))],
                     'hours'   => $counts,
                 ];
-                $data['routes'] = self::paginate(
-                    $this->stats->topRoutes($p['debut'], $p['fin'], self::MAX_ROUTES),
-                    self::pageOf($query, 'p_od'),
-                );
+                // Rang par fréquence calculé avant le tri : il reste affiché quel que soit l'ordre choisi
+                $routes = $this->stats->topRoutes($p['debut'], $p['fin'], self::MAX_ROUTES);
+                foreach ($routes as $i => &$route) {
+                    $route['rang'] = $i + 1;
+                }
+                unset($route);
+                $data['routes'] = self::paginate($sorted('od', $routes), self::pageOf($query, 'p_od'));
                 break;
 
             case 'stations':
                 $occupancy          = $this->stats->occupancy($p['debut'], $p['fin']);
                 $charts             = ['occupancy' => array_map(static fn (?float $v) => $v === null ? null : round($v * 100, 1), $occupancy['by_hour'])];
-                $data['occupancy']  = self::paginate($occupancy['by_station'], self::pageOf($query, 'p_st'));
-                $data['rebalance']  = self::paginate($this->stats->stationsToRebalance(), self::pageOf($query, 'p_reg'));
-                $data['moves']      = self::paginate($this->stats->proposedMoves(), self::pageOf($query, 'p_dep'));
+                $data['occupancy']  = self::paginate($sorted('st', $occupancy['by_station']), self::pageOf($query, 'p_st'));
+                $data['rebalance']  = self::paginate($sorted('reg', $this->stats->stationsToRebalance()), self::pageOf($query, 'p_reg'));
+                $data['moves']      = self::paginate($sorted('dep', $this->stats->proposedMoves()), self::pageOf($query, 'p_dep'));
                 break;
 
             case 'recettes':

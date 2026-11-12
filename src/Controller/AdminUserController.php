@@ -8,6 +8,7 @@ use App\Database\BusinessException;
 use App\Repository\UserRepository;
 use App\Security\Auth;
 use App\Support\Flash;
+use App\Support\Sort;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Views\Twig;
@@ -26,15 +27,17 @@ final class AdminUserController extends Controller
     {
         $query   = $request->getQueryParams();
         $filters = ['q' => self::str($query, 'q', 100), 'role' => self::oneOf($query, 'role', self::ROLES)];
+        $tri     = Sort::fromQuery($query, array_keys(UserRepository::SORTABLE));
         $page    = self::page($query);
-        $result  = $this->users->search($filters['q'], $filters['role'], $page, self::PER_PAGE);
+        $result  = $this->users->search($filters['q'], $filters['role'], $page, self::PER_PAGE, $tri);
 
         return $this->render($response, 'admin/users/index.twig', [
             'users'    => $result['rows'],
             'has_next' => $result['has_next'],
             'page'     => $page,
             'filters'  => $filters,
-            'query'    => array_filter($filters),
+            'query'    => array_filter($filters) + $tri->params(),
+            'tri'      => $tri->view('admin.users', array_filter($filters)),
             'counts'   => $this->users->countByRole(),
         ]);
     }

@@ -53,6 +53,7 @@
       <h2 class="font-semibold">Emprunter un vélo</h2>
       <p class="mt-1 text-sm text-zinc-500">Abonnement {{ subscription.libelle }} valable jusqu'au {{ subscription.date_fin|d }}.</p>
       <form method="get" action="{{ url_for('rentals') }}" class="mt-4 flex flex-wrap items-end gap-3">
+    {{ ui.sort_fields(tri, 'trajets') }}
         <div class="min-w-64 flex-1">
           <label for="f-station" class="label">Station de départ</label>
           <select id="f-station" name="station" class="input" required>
@@ -97,17 +98,20 @@
     {{ ui.stat('Dépenses (hors abonnement)', summary.depenses|money) }}
   </section>
 
-  <section class="card overflow-hidden">
+  <section class="card overflow-hidden" data-zone="trajets">
     <h2 class="border-b border-zinc-200 px-4 py-3 font-semibold">Historique</h2>
     {% if history is empty %}
       {{ ui.empty('Vous n\'avez encore effectué aucun trajet.') }}
     {% else %}
       <div class="overflow-x-auto">
         <table class="table">
-          <thead class="bg-zinc-50">
-            <tr><th>Départ</th><th>Trajet</th><th>Vélo</th><th class="text-right">Durée</th><th class="text-right">Coût</th></tr>
+          <thead id="trajets-head" class="bg-zinc-50">
+            <tr>
+              {{ ui.th('Départ', 'emprunt', tri) }}{{ ui.th('Trajet', 'trajet', tri) }}{{ ui.th('Vélo', 'velo', tri) }}
+              {{ ui.th('Durée', 'duree', tri, 'text-right') }}{{ ui.th('Coût', 'cout', tri, 'text-right') }}
+            </tr>
           </thead>
-          <tbody class="divide-y divide-zinc-100">
+          <tbody id="trajets-body" class="divide-y divide-zinc-100">
             {% for l in history %}
               <tr>
                 <td>{{ l.date_heure_emprunt|dt }}</td>
@@ -120,7 +124,7 @@
           </tbody>
         </table>
       </div>
-      {{ ui.pagination('rentals', page, has_next) }}
+      <div id="trajets-pager" data-zone-pager>{{ ui.pagination('rentals', page, has_next, query) }}</div>
     {% endif %}
   </section>
 {% endblock %}

@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Repository\BikeRepository;
 use App\Repository\StationRepository;
 use App\Support\Flash;
+use App\Support\Sort;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
@@ -35,15 +36,18 @@ final class BikeController extends Controller
             'station'  => self::int($query, 'station'),
             'batterie' => $batterie !== null ? min($batterie, 100) : null,
         ];
+        $tri    = Sort::fromQuery($query, array_keys(BikeRepository::SORTABLE));
         $page   = self::page($query);
-        $result = $this->bikes->search($filters, $page, self::PER_PAGE);
+        $result = $this->bikes->search($filters, $page, self::PER_PAGE, $tri);
+        $kept   = array_filter($filters, static fn ($v) => $v !== null);
 
         return $this->render($response, 'bikes/index.twig', [
             'bikes'    => $result['rows'],
             'has_next' => $result['has_next'],
             'page'     => $page,
             'filters'  => $filters,
-            'query'    => array_filter($filters, static fn ($v) => $v !== null),
+            'query'    => $kept + $tri->params(),
+            'tri'      => $tri->view('bikes', $kept),
             'counts'   => $this->bikes->countByState(),
             'stations' => $this->stations->names(),
             'etats'    => BikeRepository::ETATS,

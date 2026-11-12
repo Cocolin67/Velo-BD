@@ -7,6 +7,7 @@
   {{ ui.page_header('Locations', 'Tous les trajets du réseau. Durée et coût sont calculés par la base à la restitution.') }}
 
   <form method="get" class="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-6">
+    {{ ui.sort_fields(tri, 'locations') }}
     <input type="search" name="q" value="{{ filters.q }}" placeholder="Usager (nom ou email)…" class="input lg:col-span-2" aria-label="Usager">
     <select name="statut" class="input" aria-label="Statut">
       <option value="">Toutes</option>
@@ -33,16 +34,20 @@
     <p class="mb-3 text-xs text-zinc-500">Les locations en cours sont affichées quelle que soit leur date.</p>
   {% endif %}
 
-  <div class="card overflow-hidden">
+  <div class="card overflow-hidden" data-zone="locations">
     {% if rentals is empty %}
       {{ ui.empty('Aucune location ne correspond à ces critères.') }}
     {% else %}
       <div class="overflow-x-auto">
         <table class="table">
-          <thead class="bg-zinc-50">
-            <tr><th>#</th><th>Emprunt</th><th>Usager</th><th>Trajet</th><th>Vélo</th><th class="text-right">Durée</th><th class="text-right">Coût</th></tr>
+          <thead id="locations-head" class="bg-zinc-50">
+            <tr>
+              {{ ui.th('#', 'id', tri) }}{{ ui.th('Emprunt', 'emprunt', tri) }}{{ ui.th('Usager', 'usager', tri) }}
+              {{ ui.th('Trajet', 'trajet', tri) }}{{ ui.th('Vélo', 'velo', tri) }}
+              {{ ui.th('Durée', 'duree', tri, 'text-right') }}{{ ui.th('Coût', 'cout', tri, 'text-right') }}
+            </tr>
           </thead>
-          <tbody class="divide-y divide-zinc-100">
+          <tbody id="locations-body" class="divide-y divide-zinc-100">
             {% for l in rentals %}
               <tr>
                 <td class="tabular-nums text-zinc-400">{{ l.id_location }}</td>
@@ -60,7 +65,7 @@
           </tbody>
         </table>
       </div>
-      {{ ui.pagination('rentals.admin', page, has_next, query) }}
+      <div id="locations-pager" data-zone-pager>{{ ui.pagination('rentals.admin', page, has_next, query) }}</div>
     {% endif %}
   </div>
 {% endblock %}

@@ -72,13 +72,13 @@
         {{ ui.empty('Aucun abonnement pour le moment.') }}
       {% else %}
         <div class="overflow-x-auto">
-          <table class="table">
+          <table class="table" data-sortable>
             <thead class="bg-zinc-50"><tr><th>Formule</th><th>Période</th><th>Statut</th></tr></thead>
             <tbody class="divide-y divide-zinc-100">
               {% for a in history %}
                 <tr>
                   <td>{{ a.libelle }}</td>
-                  <td class="text-xs">{{ a.date_debut|d }} → {{ a.date_fin|d }}</td>
+                  <td class="text-xs" data-sort-value="{{ a.date_debut }}">{{ a.date_debut|d }} → {{ a.date_fin|d }}</td>
                   <td>{{ ui.badge(a.statut) }}</td>
                 </tr>
               {% endfor %}
@@ -94,15 +94,15 @@
         {{ ui.empty('Aucune facture.') }}
       {% else %}
         <div class="overflow-x-auto">
-          <table class="table">
+          <table class="table" data-sortable>
             <thead class="bg-zinc-50"><tr><th>N°</th><th>Date</th><th>Objet</th><th class="text-right">Montant</th><th>Paiement</th></tr></thead>
             <tbody class="divide-y divide-zinc-100">
               {% for i in invoices %}
                 <tr>
-                  <td class="tabular-nums text-zinc-500">#{{ i.id_facture }}</td>
-                  <td>{{ i.date_emission|d }}</td>
+                  <td class="tabular-nums text-zinc-500" data-sort-value="{{ i.id_facture }}">#{{ i.id_facture }}</td>
+                  <td data-sort-value="{{ i.date_emission }}">{{ i.date_emission|d }}</td>
                   <td>{{ i.libelle }}</td>
-                  <td class="text-right tabular-nums">{{ i.montant_total|money }}</td>
+                  <td class="text-right tabular-nums" data-sort-value="{{ i.montant_total }}">{{ i.montant_total|money }}</td>
                   <td>{{ ui.badge(i.statut_paiement) }}</td>
                 </tr>
               {% endfor %}

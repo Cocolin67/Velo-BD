@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Database\BusinessException;
 use App\Database\Database;
+use App\Support\Sort;
 
 /** Stations, bornes et occupation en temps réel (vue v_stations_occupation). */
 final class StationRepository
@@ -13,11 +14,14 @@ final class StationRepository
     public const ETATS       = ['en_service', 'hors_service', 'en_travaux'];
     public const ETATS_BORNE = ['fonctionnelle', 'hors_service'];
 
-    private const SORTS = [
-        'nom'         => 'o.nom ASC',
-        'disponibles' => 'o.nb_velos_disponibles DESC, o.nom ASC',
-        'libres'      => 'o.nb_bornes_libres DESC, o.nom ASC',
-        'remplissage' => 'o.taux_remplissage DESC, o.nom ASC',
+    /** Colonnes triables depuis l'en-tête du tableau (voir App\Support\Sort) */
+    public const SORTABLE = [
+        'nom'         => 'o.nom',
+        'etat'        => 'CAST(o.etat_station AS CHAR)',   // ordre alphabétique, pas celui de l'ENUM
+        'mecaniques'  => 'o.nb_velos_mecaniques',
+        'electriques' => 'o.nb_velos_electriques',
+        'libres'      => 'o.nb_bornes_libres',
+        'remplissage' => 'o.taux_remplissage',
     ];
 
     public function __construct(private readonly Database $db)
@@ -25,12 +29,12 @@ final class StationRepository
     }
 
     /**
-     * Recherche paginée.
+     * Recherche paginée, par nom de station sauf tri choisi dans l'en-tête du tableau ($tri).
      *
-     * @param array{q?: string, etat?: ?string, dispo?: ?string, sort?: ?string} $f
+     * @param array{q?: string, etat?: ?string, dispo?: ?string} $f
      * @return array{rows: list<array<string, mixed>>, has_next: bool}
      */
-    public function search(array $f, int $page, int $perPage): array
+    public function search(array $f, int $page, int $perPage, ?Sort $tri = null): array
     {
         $where  = [];
         $params = [];
@@ -52,7 +56,8 @@ final class StationRepository
             default       => '1 = 1',
         };
 
-        $order = self::SORTS[$f['sort'] ?? 'nom'] ?? self::SORTS['nom'];
+        $order = $tri?->orderBy(self::SORTABLE, 'o.nom ASC', 'o.nom ASC, o.id_station ASC', ['remplissage'])
+            ?? 'o.nom ASC';
         $rows  = $this->db->fetchAll(
             'SELECT o.id_station, o.nom, s.adresse, o.etat_station, o.nb_bornes, o.nb_bornes_libres,
                     o.nb_velos_mecaniques, o.nb_velos_electriques, o.nb_velos_disponibles, o.taux_remplissage
