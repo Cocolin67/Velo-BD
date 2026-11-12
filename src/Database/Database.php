@@ -31,7 +31,15 @@ final class Database
             $c   = $this->config;
             $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $c['host'], $c['port'], $c['name']);
 
+            // Sans délai, un serveur qui accepte la connexion TCP sans répondre (tables
+            // système corrompues, serveur figé) bloque la page indéfiniment : mysqlnd
+            // attend 86 400 s par défaut. ATTR_TIMEOUT ne couvre que l'ouverture TCP ;
+            // net_read_timeout couvre le handshake et chaque lecture. 60 s laisse de la
+            // marge aux statistiques les plus lourdes (~17 s sur 365 jours).
+            ini_set('mysqlnd.net_read_timeout', '60');
+
             $this->pdo = new PDO($dsn, $c['user'], $c['pass'], [
+                PDO::ATTR_TIMEOUT            => 5,
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 // Vraies requêtes préparées côté serveur : pas d'émulation, types natifs
